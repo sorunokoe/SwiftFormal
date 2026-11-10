@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem privately (read SECURITY.md in the repository first)
+    url: https://github.com/sorunokoe/SwiftFormal/security/advisories/new
+    about: A vulnerability, or a wrong verdict that must not be public yet. SECURITY.md in the repository says how.

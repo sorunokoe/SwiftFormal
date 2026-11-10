@@ -1,0 +1,35 @@
+breaking changes detected in SFProve
+SFProve\.Verdict to SFProve\.ProofVerdict
+enum Verdict has been renamed to enum ProofVerdict
+enumelement Verdict\.
+Verdict\.__derived_enum_equals
+breaking changes detected in SwiftFormal:
+typealias Property\.Evaluate is now with @_spi
+struct Property\.Observer is now with @_spi
+constructor Property\.Observer\.init(observe:finish:) is now with @_spi
+func Property\.custom(_:makeObserver:) is now with @_spi
+LRATProof\.init(_:)
+func Deterministic() has been removed
+func Matches(_:) has been removed
+func Matches(_:_:) has been removed
+func Table(_:) has been removed
+func Injective() has been removed
+func RoundTrip(through:) has been removed
+func Satisfies(_:_:) has been removed
+func Satisfies(_:when:then:) has been removed
+# In-place contracts (CHANGELOG "No SwiftUI name clashes"): the deprecated Image functions moved from SwiftFormal to SwiftFormalTesting, because SwiftUI declares Image and app files now import SwiftFormal.
+func Image(equals:) has been removed
+func Image(within:) has been removed
+# One way to walk (CHANGELOG "One way to walk: Prove"): every other walk entry point left the public API. The pre-release names stay as unavailable declarations that name their Prove replacement (the digester counts them as removed); the walk behind @Verify is _verifyContracts, hidden from the docs.
+func describeOutput(_:) has been removed
+func expectLocked(_:_:over:maxInputs:file:sourceLocation:) has been removed
+func expectProved(_:allowBounded:sourceLocation:) has been removed
+func lockBehavior(_:_:over:maxInputs:file:directory:) has been removed
+func partition(_:over:limit:) has been renamed to func runPartition(_:over:limit:)
+func prove(_:_:budget:allowBounded:sourceLocation:properties:) has been removed
+func prove(_:_:over:budget:allowBounded:sourceLocation:properties:) has been removed
+func verify(_:_:budget:properties:) has been removed
+func verify(_:_:over:budget:properties:assuming:) has been removed
+func verifyContracts(_:_:over:budget:properties:requires:) has been renamed to func _verifyContracts
+func verifyContracts(_:_:over:budget:properties:requires:) is now with @_documentation
+breaking changes detected in SwiftFormalTesting:

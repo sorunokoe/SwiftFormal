@@ -1,0 +1,45 @@
+{
+ "configurations": [
+  "debug",
+  "release"
+ ],
+ "functions": [
+  {
+   "hasContract": true,
+   "location": {
+    "column": 13,
+    "file": "<ROOT>/Examples/GatedPackage/Sources/Kernels/Kernels.swift",
+    "line": 6
+   },
+   "name": "cellIndex(_:_:_:_:)",
+   "status": "contractHolds",
+   "symbol": "$s7Kernels9cellIndexys4Int8VAD_A3DtF"
+  },
+  {
+   "hasContract": false,
+   "location": {
+    "column": 13,
+    "file": "<ROOT>/Examples/GatedPackage/Sources/Kernels/Kernels.swift",
+    "line": 16
+   },
+   "name": "percent(_:_:)",
+   "status": "safe",
+   "symbol": "$s7Kernels7percentys6UInt16VAD_ADtF"
+  }
+ ],
+ "module": "Kernels",
+ "optimization": "-Onone",
+ "summary": {
+  "compilerGenerated": 3,
+  "contractFails": 0,
+  "contractHolds": 1,
+  "internalErrors": 0,
+  "mayTrap": 0,
+  "safe": 1,
+  "total": 2,
+  "undecided": 0,
+  "unsupported": 0,
+  "unsupportedByCategory": {}
+ },
+ "timing": {}
+}

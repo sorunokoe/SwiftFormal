@@ -1,0 +1,56 @@
+name: Bug report
+description: 'Something does not work as documented (for a wrong verdict, use "Soundness bug" instead)'
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If a tool said `proved`, `safe` or `contractHolds` and it was wrong, please use the **Soundness bug** form instead. That is the most serious kind of bug here.
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool
+      options:
+        - Walk (Prove, @Verify)
+        - Prove (proveSigned, in SwiftFormalTesting)
+        - Scan (swiftformal check)
+        - Build gate (swiftformal check --gate)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Paste the full message if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Smallest reproduction
+      description: The smallest code or command that shows it.
+      render: swift
+    validations:
+      required: true
+  - type: input
+    id: compiler
+    attributes:
+      label: Compiler
+      description: The first line of `swift --version`
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: For example macOS 15 on Apple silicon, or iOS 18 Simulator
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SwiftFormal version or commit
+    validations:
+      required: false

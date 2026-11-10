@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Optional pre-commit hook (installed by Scripts/install-hooks.sh). CI is the authority; this only saves a round trip.
+# Lints the staged Swift files under Sources and Tests with swift-format and, if installed, SwiftLint (against its baseline).
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+files=()
+while IFS= read -r f; do files+=("$f"); done < <(git diff --cached --name-only --diff-filter=ACM -- 'Sources/*.swift' 'Tests/*.swift')
+[ ${#files[@]} -eq 0 ] && exit 0
+swift format lint --strict "${files[@]}"
+if command -v swiftlint >/dev/null; then
+  swiftlint lint --quiet --baseline Scripts/baseline/swiftlint-baseline.json --strict "${files[@]}"
+fi

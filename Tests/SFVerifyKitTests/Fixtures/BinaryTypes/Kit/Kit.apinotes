@@ -1,0 +1,7 @@
+---
+Name: Kit
+Classes:
+- Name: "KitSurface"
+  SwiftBridge: "Surface"
+  SwiftName: "__KitSurface"
+  SwiftPrivate: true

@@ -1,0 +1,21 @@
+{
+  "$s7Metrics13adder_ensuresySbs5UInt8V_A2DtF" : "sha256:216917bd6ac4ec7ba4464a888b66997d961b51969476e42d4ddf8f2c601d80e8",
+  "$s7Metrics13clamp_ensuresySbs4Int8V_A3DtF" : "sha256:dfb79b7fe65e8db858518c1a39f08dfb4cf262b826510562f65c041fc2a3ebb5",
+  "$s7Metrics13clamp_ensuresySbs4Int8V_A3DtFSbyKXEfu_" : "sha256:3651bbf667fbf14040cf27a57919ed82d13beef2a4d3d6da8210a576a4508c43",
+  "$s7Metrics13mulCommutes32ys5Int32VAD_ADtF" : "sha256:de1f13643b00ab1025efe5551c7cc5645acfa9fef7c81392fa4b58f44dab64b2",
+  "$s7Metrics14clamp_requiresySbs4Int8V_A2DtF" : "sha256:6da2c44c4f82400c008c54d0b1fea8bf653c8a654133d0c0f99f1cf792f489f3",
+  "$s7Metrics16discount_ensuresySbs5UInt8V_A2DtF" : "sha256:0ea091a82d126e240ecfeb57e0be6233bdde0c8a808dd6cdcd150bf35a830ce1",
+  "$s7Metrics17cellIndex_ensuresySbs4Int8V_A4DtF" : "sha256:a150fc6c0e16859e4ab607f7dd0bbbc89c82557b10ee88bdd46b8fb11eb1d093",
+  "$s7Metrics17cellIndex_ensuresySbs4Int8V_A4DtFSbyKXEfu_" : "sha256:8b2eebd4109adca8f9b3aa431c37f79980bcf4ebf9acf7aef9cc60520befe714",
+  "$s7Metrics17popcount8_ensuresySbs5UInt8V_ADtF" : "sha256:5042814994eea139a8f8a3a741d3ed62ef41d38a0cf45353325e9d41234e381f",
+  "$s7Metrics18cellIndex_requiresySbs4Int8V_A3DtF" : "sha256:82e325bf8f3a6820e7a63287f51e13bcfb2844b2d7c73f4c0c8080553edc4e22",
+  "$s7Metrics18cellIndex_requiresySbs4Int8V_A3DtFSbyKXEfu0_" : "sha256:b4763987c3297af9d8b94390390284248f4d1a4908187ec1d3d2560b05acdd9b",
+  "$s7Metrics18cellIndex_requiresySbs4Int8V_A3DtFSbyKXEfu1_" : "sha256:b4763987c3297af9d8b94390390284248f4d1a4908187ec1d3d2560b05acdd9b",
+  "$s7Metrics18cellIndex_requiresySbs4Int8V_A3DtFSbyKXEfu_" : "sha256:9b3c194d224fead9ce0b188c7ccea07ca2322ce9cdef2179c3489c4115742c0a",
+  "$s7Metrics21mulCommutes32_ensuresySbs5Int32V_A2DtF" : "sha256:349265733d3e9edee7430c3e8575329243dbfa18e9ccb651ca99b73438ae9c4a",
+  "$s7Metrics5adderys5UInt8VAD_ADtF" : "sha256:f049987cc88acb07c0bc52bcb00580778e3bc037f3dd7b871aadd6b26403560e",
+  "$s7Metrics5clampys4Int8VAD_A2DtF" : "sha256:c65c63ea99a9d7dcbd8890152cb7aae3e01cc8db1f8c0778e271cf5933b7ba0c",
+  "$s7Metrics8discountys5UInt8VAD_ADtF" : "sha256:ea5cd9f0e34a517d6cc38797bcb0e983adeec37df85f3ab8b9b937e33c66b659",
+  "$s7Metrics9cellIndexys4Int8VAD_A3DtF" : "sha256:48d4f06bc804ff1981740107936b4499cac47a4fabb8fcaaa3123c6b3fd94685",
+  "$s7Metrics9popcount8ys5UInt8VADF" : "sha256:90ee210f2c9c5518eaf4935aa13a39b2d5cb8af5d18912a859b8f0445823bf23"
+}

@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a change or an addition
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Which tool does it touch?
+      options:
+        - Walk (Prove, @Verify)
+        - Prove (proveSigned, in SwiftFormalTesting)
+        - Scan (swiftformal check)
+        - Build gate (swiftformal check --gate)
+        - Documentation
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to check?
+      description: The function or property you cannot check today, and what you tried.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+      description: Code you would like to write, or output you would like to see. A verdict that cannot be wrong is more important than a verdict that is often right.
+    validations:
+      required: false

@@ -1,0 +1,24 @@
+// Excerpt of include/swift/SIL/SILNodes.def at swift-6.3-RELEASE (see Scripts/pin-upgrade/fixtures/README.md).
+
+ABSTRACT_VALUE_AND_INST(SingleValueInstruction, ValueBase, SILInstruction)
+  SINGLE_VALUE_INST(AllocBoxInst, alloc_box,
+                    SingleValueInstruction, None, DoesNotRelease)
+  SINGLE_VALUE_INST(UncheckedTakeEnumDataAddrInst, unchecked_take_enum_data_addr,
+                    SingleValueInstruction, MayWrite, DoesNotRelease)
+
+ABSTRACT_INST(TermInst, SILInstruction)
+  TERMINATOR(ReturnInst, return,
+             TermInst, None, DoesNotRelease)
+  TERMINATOR(BranchInst, br,
+             TermInst, None, DoesNotRelease)
+  TERMINATOR(CondBranchInst, cond_br,
+             TermInst, None, DoesNotRelease)
+  INST_RANGE(TermInst, ReturnInst, CondBranchInst)
+
+ABSTRACT_INST(RefCountingInst, SILInstruction)
+  NON_VALUE_INST(StrongRetainInst, strong_retain,
+                 RefCountingInst, MayHaveSideEffects, DoesNotRelease)
+  INST_RANGE(RefCountingInst, StrongRetainInst, StrongRetainInst)
+
+NON_VALUE_INST(DebugValueInst, debug_value,
+               SILInstruction, None, DoesNotRelease)

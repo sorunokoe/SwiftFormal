@@ -1,0 +1,11 @@
+Building for debugging...
+[Computing dependencies]
+[Using on-disk description]
+[1 / 69]
+[3 / 14] SFGenKit
+[7 / 18] SwiftFormalTesting
+[12 / 22] SFGenKit
+[19 / 22] SwiftFormalTesting
+[22 / 23] SFGenKit-product
+[23 / 23] sfgen-product
+Build complete! (4,25 sec)

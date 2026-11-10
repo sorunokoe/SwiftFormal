@@ -1,0 +1,64 @@
+name: Soundness bug
+description: A tool gave a verdict that is wrong (a false `proved`, `safe` or `contractHolds`)
+title: "Soundness: "
+labels: ["soundness", "P0"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A wrong `proved` is the worst kind of bug in SwiftFormal (policy: `docs/decisions/0006-soundness-policy.md`).
+        If the report could also be a vulnerability in someone's system, use private reporting instead: see `SECURITY.md`.
+        Please do not weaken the claim to make the problem go away; we want the exact one that was wrongly accepted.
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool
+      options:
+        - Walk (Prove, @Verify)
+        - Prove (prove, proveSigned)
+        - Scan (swiftformal check)
+        - Build gate (swiftformal check --gate)
+    validations:
+      required: true
+  - type: input
+    id: verdict
+    attributes:
+      label: Verdict given
+      description: The verdict word the tool printed or returned, for example `proved`, `safe`, `contractHolds`
+    validations:
+      required: true
+  - type: textarea
+    id: why-wrong
+    attributes:
+      label: Why it is wrong
+      description: An input that breaks the claim, or the reason the claim is false. If you ran it on plain Swift, say what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code and command that gives the wrong verdict. Include the exact `swiftformal check` flags or the test.
+      render: swift
+    validations:
+      required: true
+  - type: input
+    id: compiler
+    attributes:
+      label: Compiler
+      description: The first line of `swift --version`
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: For example macOS 15 on Apple silicon
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SwiftFormal version or commit
+    validations:
+      required: false

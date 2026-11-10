@@ -1,0 +1,72 @@
+diff -ru a/Sources/SFSIL/SILParser.swift b/Sources/SFSIL/SILParser.swift
+--- a/Sources/SFSIL/SILParser.swift	2026-11-07 09:04:52
++++ b/Sources/SFSIL/SILParser.swift	2026-11-07 09:27:38
+@@ -320,6 +320,7 @@
+     /// The standard-library types modelled as opaque handles (see `ValueType.opaque`).
+     private func opaqueTypeName(_ t: String) -> String? {
+         let name = t.hasPrefix("Swift.") ? String(t.dropFirst(6)) : t
++        if protoOpaqueFloats, ["Double", "Float", "CGFloat"].contains(name) { return name }  // PROTOTYPE (research only)
+         return ["String", "Substring", "Character", "Hasher", "DefaultStringInterpolation", "Builtin.RawPointer"].contains(name)
+             ? name : nil
+     }
+@@ -450,6 +451,8 @@
+     /// The address an `@out` result is written to (only as the first argument of an `apply`).
+     case out
+ }
++
++let protoOpaqueFloats = ProcessInfo.processInfo.environment["SF_PROTO_FLOAT"] != nil
+ 
+ enum Instruction {
+     case literal(result: String, width: Int, value: UInt64)
+diff -ru a/Sources/SFVerifyKit/Compile.swift b/Sources/SFVerifyKit/Compile.swift
+--- a/Sources/SFVerifyKit/Compile.swift	2026-11-07 09:04:52
++++ b/Sources/SFVerifyKit/Compile.swift	2026-11-07 09:15:43
+@@ -137,7 +137,11 @@
+         arguments += options.extraArguments + options.files + ["-o", output]
+         let result = try run(arguments)
+         guard result.status == 0 else { throw SILError.compilerFailed(String(result.errors.prefix(8000))) }
+-        return try String(contentsOfFile: output, encoding: .utf8)
++        let silText = try String(contentsOfFile: output, encoding: .utf8)
++        if let dump = ProcessInfo.processInfo.environment["SF_DUMP_SIL_DIR"] {
++            try? silText.write(toFile: dump + "/\(options.moduleName).\(options.optimization.rawValue).sil", atomically: true, encoding: .utf8)
++        }
++        return silText
+     }
+ 
+     /// `-sdk <path>` unless `extra` already has one, and the SDK path either way.
+diff -ru a/Sources/SFVerifyKit/Verify.swift b/Sources/SFVerifyKit/Verify.swift
+--- a/Sources/SFVerifyKit/Verify.swift	2026-11-07 09:04:52
++++ b/Sources/SFVerifyKit/Verify.swift	2026-11-07 09:18:21
+@@ -131,6 +131,32 @@
+                 report.status = report.hasContract ? .contractFails : .mayTrap
+                 report.counterexample = explain(values, info: info, function: function, module: module, specs: specs)
+             }
++        } catch let error as SILError where ProcessInfo.processInfo.environment["SF_PROTO_LOOPS"] != nil
++            && error.description.contains("loops in \(info.symbol)") && !report.hasContract {
++            // PROTOTYPE (research only): every loop header gets the invariant `true` (its state is havocked).
++            report.status = .unsupported
++            report.category = "loops (need an invariant)"
++            do {
++                let inner = error.description
++                var headers: [String] = []
++                if let a = inner.range(of: "(blocks ["), let b = inner.range(of: "])", range: a.upperBound..<inner.endIndex) {
++                    headers = inner[a.upperBound..<b.lowerBound].split(separator: ",").map {
++                        $0.trimmingCharacters(in: CharacterSet(charactersIn: " \""))
++                    }
++                }
++                let result = try SILVerifier.proveLoopFunction(
++                    info.symbol, in: module,
++                    loopInvariants: headers.map { LoopInvariant(header: $0) { c, _ in c.trueLit } },
++                    conflictBudget: options.conflictBudget)
++                if result.partialCorrectnessProved {
++                    report.status = .safe
++                    report.detail = "PROTO-HAVOC: \(result.summary)"
++                } else {
++                    report.detail = "PROTO-HAVOC-FAILED: \(result.summary)"
++                }
++            } catch {
++                report.detail = "PROTO-HAVOC-ERROR: \(error)"
++            }
+         } catch let error as SILError {
+             report.status = .unsupported
+             report.category = category(of: error)

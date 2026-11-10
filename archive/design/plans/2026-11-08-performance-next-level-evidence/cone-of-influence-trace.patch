@@ -1,0 +1,166 @@
+--- Sources/SFBV/CNFBuilder.swift	2026-11-08 20:09:19
++++ Sources/SFBV/CNFBuilder.swift	2026-11-08 20:27:32
+@@ -1,4 +1,5 @@
+ public import SFCNF
++import Foundation
+ 
+ /// Builds CNF with Tseitin gates. Literal 1 is fixed true, so constants fold away.
+ public final class CNFBuilder {
+@@ -30,7 +31,31 @@
+         return Int32(numVars)
+     }
+ 
+-    public func addClause(_ clause: Clause) { clauses.append(clause) }
++    /// Experiment: owner gate variable of each clause (0 = free clause), and gate inputs per variable.
++    package var clauseOwner: [Int32] = [0]
++    package var defA: [Int32] = [0, 0]
++    package var defB: [Int32] = [0, 0]
++    private var currentOwner: Int32 = 0
++    public func addClause(_ clause: Clause) { clauses.append(clause); clauseOwner.append(currentOwner) }
++    private func define(_ o: Int32, _ a: Int32, _ b: Int32) {
++        while defA.count <= Int(o) { defA.append(0); defB.append(0) }
++        defA[Int(o)] = a; defB[Int(o)] = b
++    }
++    /// Experiment: clauses in the cone of influence of the free clauses (which include the negated goal).
++    package func coneOfInfluence() -> CNF {
++        var inCone = [Bool](repeating: false, count: numVars + 1)
++        var stack: [Int32] = []
++        for (i, cl) in clauses.enumerated() where clauseOwner[i] == 0 { for l in cl { stack.append(abs(l)) } }
++        while let v = stack.popLast() {
++            if inCone[Int(v)] { continue }
++            inCone[Int(v)] = true
++            if Int(v) < defA.count && defA[Int(v)] != 0 { stack.append(abs(defA[Int(v)])); stack.append(abs(defB[Int(v)])) }
++            if Int(v) < defC.count && defC[Int(v)] != 0 { stack.append(abs(defC[Int(v)])) }
++        }
++        var kept: [Clause] = []
++        for (i, cl) in clauses.enumerated() where clauseOwner[i] == 0 || inCone[Int(clauseOwner[i])] { kept.append(cl) }
++        return CNF(numVars: numVars, clauses: kept)
++    }
+ 
+     public func constant(_ value: Bool) -> Int32 { value ? trueLit : falseLit }
+ 
+@@ -44,9 +69,12 @@
+         if let known = andGates[key] { return known }
+         let o = fresh()
+         andGates[key] = o
++        define(o, a, b)
++        currentOwner = o
+         addClause([-o, a])
+         addClause([-o, b])
+         addClause([o, -a, -b])
++        currentOwner = 0
+         return o
+     }
+ 
+@@ -71,14 +99,46 @@
+ 
+     private func xorGate(_ a: Int32, _ b: Int32) -> Int32 {
+         let o = fresh()
++        define(o, a, b)
++        currentOwner = o
+         addClause([-a, -b, -o])
+         addClause([a, b, -o])
+         addClause([a, -b, o])
+         addClause([-a, b, o])
++        currentOwner = 0
+         return o
+     }
+ 
++    private struct IteKey: Hashable { let s: Int32, a: Int32, b: Int32 }
++    private var iteGates: [IteKey: Int32] = [:]
++    package var defC: [Int32] = [0, 0]
+     public func mux(_ select: Int32, _ whenTrue: Int32, _ whenFalse: Int32) -> Int32 {
+-        or(and(select, whenTrue), and(-select, whenFalse))
++        if ProcessInfo.processInfo.environment["SF_ITE"] == nil { return or(and(select, whenTrue), and(-select, whenFalse)) }
++        var (s, a, b) = (select, whenTrue, whenFalse)
++        if s == trueLit { return a }
++        if s == falseLit { return b }
++        if a == b { return a }
++        if s < 0 { (s, a, b) = (-s, b, a) }
++        if a == trueLit || a == s { return or(s, b) }
++        if a == falseLit || a == -s { return and(-s, b) }
++        if b == falseLit || b == s { return and(s, a) }
++        if b == trueLit || b == -s { return or(-s, a) }
++        if a == -b { return -xor(s, a) }
++        // Normalise so the else-input is positive: ite(s, a, b) = -ite(s, -a, -b).
++        let flip = b < 0
++        if flip { (a, b) = (-a, -b) }
++        let key = IteKey(s: s, a: a, b: b)
++        if let known = iteGates[key] { return flip ? -known : known }
++        let o = fresh()
++        define(o, s, a)
++        while defC.count <= Int(o) { defC.append(0) }
++        defC[Int(o)] = b
++        currentOwner = o
++        addClause([-s, -a, o]); addClause([-s, a, -o])
++        addClause([s, -b, o]); addClause([s, b, -o])
++        addClause([-a, -b, o]); addClause([a, b, -o])
++        currentOwner = 0
++        iteGates[key] = o
++        return flip ? -o : o
+     }
+ }
+--- Sources/SFProve/Prove.swift	2026-11-08 20:09:19
++++ Sources/SFProve/Prove.swift	2026-11-08 20:20:15
+@@ -1,4 +1,5 @@
+ public import SFBV
++import Foundation
+ import SFCNF
+ import SFCheck
+ package import SFSAT
+@@ -127,6 +128,8 @@
+     proofFormat: ProofFormat,
+     claim: (CNFBuilder, [BV]) throws -> Int32
+ ) throws -> ProofOutcome {
++    let clock = ContinuousClock()
++    let t0 = clock.now
+     let builder = CNFBuilder()
+     let inputs = inputWidths.enumerated().map { i, width in
+         if let bits = inputSignedBits?[i], bits < width { return builder.input(width: width, signedBits: bits) }
+@@ -134,22 +137,45 @@
+     }
+     let goal = try claim(builder, inputs)
+     builder.addClause([-goal])
+-    let cnf = builder.cnf
++    let full = builder.cnf
++    let t1 = clock.now
++    let trace = ProcessInfo.processInfo.environment["SF_TRACE"] != nil
++    let useCOI = ProcessInfo.processInfo.environment["SF_COI"] != nil
++    let coi = (trace || useCOI) ? builder.coneOfInfluence() : full
++    let cnf = useCOI ? coi : full
++    let t1b = clock.now
+     let report = Solver.solveLRATReporting(cnf, conflictBudget: conflictBudget)
++    let t2 = clock.now
++    let solveStart = useCOI ? t1 : t1b
++    func secs(_ d: Duration) -> Double { Double(d.components.seconds) + Double(d.components.attoseconds) * 1e-18 }
++    func emit(_ kind: String, _ check: Double, _ steps: Int, _ hints: Int) {
++        guard trace else { return }
++        var h: UInt64 = 0xcbf29ce484222325
++        for cl in full.clauses { for l in cl { h = (h ^ UInt64(UInt32(bitPattern: l))) &* 0x100000001b3 }; h = (h ^ 0xFFFF) &* 0x100000001b3 }
++        let line = "SFTRACE \(kind) hash=\(String(h, radix: 16)) vars=\(full.numVars) clauses=\(full.clauses.count) coiClauses=\(coi.clauses.count) conflicts=\(report.stats.conflicts) encode=\(secs(t1 - t0)) solve=\(secs(t2 - solveStart)) coiTime=\(secs(t1b - t1)) check=\(check) steps=\(steps) hints=\(hints)\n"
++        FileHandle.standardError.write(line.data(using: .utf8)!)
++    }
+     func outcome(_ verdict: ProofVerdict) -> ProofOutcome { ProofOutcome(verdict: verdict, stats: ProofStats(report.stats)) }
+     switch report.outcome {
+     case .unsat(let log):
+         let accepted: Bool
++        let t3 = clock.now
+         switch proofFormat {
+         case .lrat: accepted = LRATChecker.check(cnf: cnf, proof: LRATProof(log))
+         case .rup: accepted = RUPChecker.check(cnf: cnf, proof: log.rupProof)
+         }
++        let t4 = clock.now
++        var hintCount = 0
++        for s in log.steps { if case .add(_, _, let h) = s { hintCount += h.count } }
++        emit("unsat", secs(t4 - t3), log.steps.count, hintCount)
+         guard accepted else { throw ProveError.proofRejected }
+         return outcome(.proved)
+     case .sat(let model):
++        emit("sat", 0, 0, 0)
+         guard cnf.isSatisfied(by: model) else { throw ProveError.modelRejected }
+         return outcome(.counterexample(inputs.map { builder.value(of: $0, in: model) }))
+     case .unknown:
++        emit("unknown", 0, 0, 0)
+         return outcome(.unknown)
+     }
+ }

@@ -1,0 +1,180 @@
+warning: 'swift-syntax': skipping cache due to an error: The file “maintenance.lock” doesn’t exist.
+Building for debugging...
+[Computing dependencies]
+[Provisioning 3 / 49]
+[Pre-planning 1 / 1233]
+[Planning deferred tasks]
+[50 / 517] SwiftSyntax602
+[54 / 517] SwiftSyntax603
+[113 / 517] SwiftIfConfig
+[129 / 517] SwiftFormalContracts
+[204 / 517] SFGenKit
+[214 / 517] SFCNF
+[222 / 517]
+[232 / 526] SwiftSyntax601
+[236 / 556]
+[250 / 556] SwiftSyntax603
+[253 / 556] SwiftSyntax604
+[257 / 556] SwiftSyntax601
+[273 / 556] SwiftSyntax604
+[299 / 556] SwiftSyntax601
+[322 / 556] SwiftSyntax600
+[336 / 558]
+[340 / 561] SFSAT
+[350 / 571] SwiftFormal
+[351 / 571] SwiftFormal-product
+[351 / 571] SFSAT
+[374 / 573] SFCheck
+[375 / 573] SFSAT
+[377 / 573] SFSAT
+[377 / 573] SFSemantics
+[384 / 580] SFSemantics
+[397 / 581] SFSemantics
+[400 / 581] SFProve
+[402 / 581] SFProve
+[403 / 581] _SwiftSyntaxCShims
+[415 / 624]
+[416 / 624]
+[417 / 624]
+[419 / 624]
+[421 / 624]
+[424 / 624]
+[426 / 624]
+[427 / 624]
+[433 / 657]
+[434 / 657]
+[436 / 657]
+[450 / 657]
+[451 / 657]
+[451 / 657] SwiftSyntax
+[453 / 657] SwiftSyntax
+[454 / 657] SwiftSyntax
+[454 / 657]
+[455 / 657]
+[456 / 657] SwiftSyntax
+[457 / 657] SwiftSyntax
+[458 / 657] SwiftSyntax
+[467 / 660]
+[468 / 660]
+[476 / 667] SwiftBasicFormat
+[478 / 678]
+[481 / 678] SwiftBasicFormat
+[494 / 678] SwiftDiagnostics
+[501 / 678]
+[504 / 678] SwiftDiagnostics-product
+[505 / 678] SwiftParser
+[513 / 693] SwiftParser
+[515 / 693] SwiftParser
+[516 / 693] _SwiftSyntaxCShims
+[518 / 693] SwiftParser
+[521 / 693] SwiftSyntax
+[525 / 693] SwiftParser
+[526 / 693] SwiftParser
+[534 / 696] SwiftParser
+[546 / 710] SwiftParserDiagnostics
+[548 / 721] SwiftOperators
+[553 / 721] SwiftOperators
+[556 / 721] SwiftParserDiagnostics
+[562 / 721] SwiftParserDiagnostics
+[567 / 727] SwiftOperators
+[574 / 728] SwiftOperators
+[576 / 728] SwiftSyntax
+[578 / 728] SwiftSyntax
+[581 / 728] SwiftBasicFormat
+[583 / 728] SwiftOperators
+[597 / 743]
+[599 / 743] SwiftSyntaxBuilder
+[606 / 743] SwiftSyntaxBuilder
+[609 / 743] SwiftFormalTesting
+[624 / 743] SFGenKit
+[630 / 743] SFSIL
+[632 / 743] SwiftSyntaxBuilder
+[636 / 744] SFSIL
+[639 / 745] SwiftFormalTesting
+[644 / 746]
+[645 / 747]
+[646 / 762] SwiftSyntaxBuilder
+[647 / 762] sfgen-product
+[651 / 764] SwiftSyntaxBuilder
+[656 / 776] SwiftIfConfig
+[665 / 776] SwiftIfConfig
+[668 / 776] SwiftIfConfig
+[681 / 776] SwiftIfConfig
+[683 / 776] SwiftIfConfig
+[684 / 776] SwiftIfConfig
+[685 / 776] SwiftIfConfig
+[686 / 776] sfverify-product
+[687 / 776] SwiftIfConfig
+[689 / 776] SFVerifyKit
+[691 / 776] SFVerifyKit
+[692 / 776] SFVerifyKit
+[693 / 776] SFVerifyKit
+[695 / 776] SFLLVM
+[696 / 776] SFLLVM
+[696 / 776]
+[697 / 776] sfgen-product
+[701 / 776] SFLLVM
+[709 / 777] SwiftFormalTesting
+[714 / 777] sfverify-product
+[715 / 778] SFLLVM
+[716 / 778] SFVerifyKit-product
+[717 / 778] SFGenKit-product
+[717 / 778] sfgen-product
+[718 / 778] SwiftSyntaxMacros
+[731 / 793] SwiftSyntaxMacros
+[733 / 793] SwiftSyntaxMacros
+[733 / 794] sfverify-product
+[736 / 795] SwiftSyntaxMacros
+[737 / 795] SwiftSyntaxMacros
+[741 / 795] SwiftSyntaxMacros
+[742 / 796] SwiftSyntaxMacros
+[743 / 796] SwiftSyntaxMacros
+[744 / 796] SwiftSyntaxMacros
+[744 / 796] sfverify-product
+[745 / 796] sfverify-product
+[746 / 796] sfverify-product
+[747 / 796] SwiftSyntaxMacroExpansion
+[758 / 806] sfverify-product
+[759 / 806] SwiftSyntaxMacroExpansion
+[763 / 806] SwiftSyntaxMacroExpansion
+[768 / 807] SwiftSyntaxMacroExpansion
+[768 / 807] SwiftCompilerPluginMessageHandling
+[781 / 820] SwiftCompilerPluginMessageHandling
+[787 / 820] SwiftCompilerPluginMessageHandling
+[790 / 821] SwiftCompilerPluginMessageHandling
+[790 / 821] SwiftCompilerPlugin
+[792 / 823] SwiftCompilerPlugin
+[798 / 823] SwiftCompilerPlugin
+[800 / 823] SwiftCompilerPlugin
+[807 / 823] SwiftFormalMacros
+[808 / 824] SwiftFormalMacros
+[811 / 827] SwiftFormalMacros
+[812 / 827] SwiftFormalMacros
+[814 / 827] SwiftFormalMacros
+[815 / 827] SwiftFormalMacros
+[817 / 828] SwiftFormalContracts
+[819 / 830] SwiftFormalContracts
+[827 / 830] SwiftFormalContracts
+[828 / 830] SwiftFormalContracts
+[829 / 830] SwiftFormalContracts-product
+[829 / 830] SwiftFormalTesting
+Build complete! (95,44 sec)
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1233]
+[Planning 447 / 1233]
+[Planning deferred tasks]
+[1 / 69]
+[3 / 14] SwiftFormal
+[4 / 13] SwiftFormalTesting
+[5 / 7] SwiftFormalContracts
+[5 / 6] SwiftFormalTesting
+Build complete! (5,22 sec)
+
+No breaking changes detected in SFProve
+
+No breaking changes detected in SwiftFormal
+
+No breaking changes detected in SwiftFormalContracts
+
+No breaking changes detected in SwiftFormalTesting

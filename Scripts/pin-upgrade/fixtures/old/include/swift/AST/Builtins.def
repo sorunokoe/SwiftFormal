@@ -1,0 +1,9 @@
+// Excerpt of include/swift/AST/Builtins.def at swift-6.3-RELEASE (see Scripts/pin-upgrade/fixtures/README.md).
+#ifndef BUILTIN_BINARY_OPERATION_ALL
+#define BUILTIN_BINARY_OPERATION_ALL(Id, Name, Attrs, Overload) \
+  BUILTIN_BINARY_OPERATION(Id, #Name, Attrs, Overload)
+#endif
+BUILTIN_CAST_OPERATION(PtrToInt, "ptrtoint", "n")
+BUILTIN_BINARY_OPERATION_ALL(Add,     add,      "n", IntegerOrVector)
+BUILTIN_BINARY_OPERATION_WITH_OVERFLOW(SAddOver,
+                                       "sadd_with_overflow", Add, "n", Integer)

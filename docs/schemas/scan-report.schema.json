@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sfverify --json report (schemaVersion 1)",
+  "description": "The report `sfverify --json` prints. Every object is closed (additionalProperties: false), so a new key must be added here in the same change. Keys that are not in `required` are omitted when absent, never null. `solverConflicts`, `cnfVariables` and `cnfClauses` appear only with `--stats`; `weakContract` and `summary.weakContracts` only with `--mutate`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "module", "optimization", "functions", "summary", "timing"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "module": {"type": "string"},
+    "optimization": {"enum": ["-Onone", "-O"]},
+    "functions": {"type": "array", "items": {"$ref": "#/$defs/function"}},
+    "summary": {"$ref": "#/$defs/summary"},
+    "timing": {"$ref": "#/$defs/timing"},
+    "configurations": {"type": "array", "items": {"enum": ["debug", "release"]}},
+    "compiler": {"type": "string"},
+    "pinned": {"type": "boolean"},
+    "warnings": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Problems with the run as a whole, such as functions that may be missing or an imported module of the same build that could not be linked (its name and first compiler error). Omitted when there are none." },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "description": "Present only with --at or --symbol: the selector, and the one function it picked in this module (absent when it picked none here). functions then holds only that function; the summary counts only it.",
+      "properties": {
+        "selector": { "type": "string", "description": "--at <file>:<line> or --symbol <name>, as given." },
+        "function": { "type": "string" }
+      }
+    },
+    "proofCache": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directory", "trusted", "hits", "misses", "stored", "rejected", "unkeyed", "ioErrors", "keySeconds"],
+      "description": "Present when the run used a proof cache (sfverify --package, --proof-cache; swiftformal check): what it did, summed over both configurations. hits = answers taken from the cache; misses = lookups without an entry; stored = answers written; rejected = entries found but not used (untrusted file, another key, or a counterexample that did not replay); unkeyed = functions verified without the cache because part of their identity was unknown; ioErrors = failed reads or writes (the function was verified as without the cache); keySeconds = time spent computing keys. trusted = false: the directory or one above it can be changed by others, and no entry was read or written.",
+      "properties": {
+        "directory": { "type": "string" },
+        "trusted": { "type": "boolean" },
+        "hits": { "type": "integer", "minimum": 0 },
+        "misses": { "type": "integer", "minimum": 0 },
+        "stored": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "unkeyed": { "type": "integer", "minimum": 0 },
+        "ioErrors": { "type": "integer", "minimum": 0 },
+        "keySeconds": { "type": "number", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "status": {"enum": ["safe", "mayTrap", "contractHolds", "contractFails", "undecided", "unsupported", "internalError"]},
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "line", "column"],
+      "properties": {
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 0},
+        "column": {"type": "integer", "minimum": 0}
+      }
+    },
+    "counterexample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputs", "failure"],
+      "properties": {
+        "inputs": {"type": "array", "items": {"type": "string"}},
+        "result": {"type": "string"},
+        "failure": {"type": "string"},
+        "at": {"$ref": "#/$defs/location"},
+        "replay": {"type": "string"},
+        "noReplay": {"type": "string"},
+        "ensuresCall": {"type": "string"},
+        "confirmed": {"type": "boolean"},
+        "foreignResults": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "function": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "symbol", "status", "hasContract", "seconds"],
+      "properties": {
+        "name": {"type": "string"},
+        "symbol": {"type": "string"},
+        "location": {"$ref": "#/$defs/location"},
+        "status": {"$ref": "#/$defs/status"},
+        "category": {"type": "string"},
+        "detail": {"type": "string"},
+        "counterexample": {"$ref": "#/$defs/counterexample"},
+        "moreTraps": {"type": "array", "items": {"$ref": "#/$defs/counterexample"}},
+        "hasContract": {"type": "boolean"},
+        "origin": {"enum": ["macro", "build"]},
+        "crossCheck": {"enum": ["agrees", "disagrees", "unread", "undecided"]},
+        "crossCheckReason": {"type": "string"},
+        "seconds": {"type": "number", "minimum": 0},
+        "solverConflicts": {"type": "integer", "minimum": 0},
+        "cnfVariables": {"type": "integer", "minimum": 0},
+        "cnfClauses": {"type": "integer", "minimum": 0},
+        "at": {"$ref": "#/$defs/location"},
+        "calledFrom": {"type": "array", "items": {"$ref": "#/$defs/location"}},
+        "hint": {"type": "string"},
+        "usesContracts": {"type": "array", "items": {"type": "string"}},
+        "assumptions": {"type": "array", "items": {"type": "string"}, "description": "What the verdict takes on trust about calls with no body (binary modules, Objective-C methods, == of Objective-C objects): each returned any value of its type and was assumed not to trap; also those of every callee the proof used (inlined, or its contract with --modular). Omitted when there are none, and for unsupported and internalError. --no-opaque-calls refuses such calls instead."},
+        "bounded": {"type": "array", "items": {"type": "string"}, "description": "For undecided with category bounded: the closure-taking calls (map, filter, first(where:), …) over an array of unknown length that the proof holds for only up to 8 elements, as `map over Array<Int> (n ≤ 8)`. Never a proof over every input. Omitted otherwise."},
+        "fromCache": {"const": true, "description": "The answer kept came from the proof cache (a stored counterexample is replayed first). Omitted otherwise."},
+        "proofScope": {"enum": ["partialCorrectness"], "description": "A proof that covers less than every run: partialCorrectness = a function with loops, proved for every run that ends (termination is not proved). Omitted otherwise."},
+        "typePath": {"type": "string"},
+        "ignoredContracts": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "Hand-written functions next to this one that look like its contract (f_requires, f_ensures). Scan reads only the contract @Verify writes, so these were not checked and status says nothing about them. Omitted when there are none."
+        },
+        "weakContract": {"$ref": "#/$defs/weakContract"}
+      }
+    },
+    "weakContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Only with --mutate, on a contractHolds function: the edits of the function that its contract does not notice.",
+      "required": ["survivors", "mutantsTried"],
+      "properties": {
+        "survivors": {"type": "array", "items": {"$ref": "#/$defs/survivingMutant"}},
+        "mutantsTried": {"type": "integer", "minimum": 1}
+      }
+    },
+    "survivingMutant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "kind"],
+      "properties": {
+        "mutation": {"type": "string"},
+        "kind": {"enum": ["skippedCall", "droppedWrite", "returnedValue", "negatedBranch", "swappedCases", "changedOperator", "changedConstant"]},
+        "at": {"$ref": "#/$defs/location"},
+        "differsOn": {"type": "array", "items": {"type": "string"}},
+        "mayBeEquivalent": {"const": true},
+        "reason": {"type": "string"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total", "safe", "mayTrap", "contractHolds", "contractFails", "undecided", "unsupported", "internalErrors",
+        "compilerGenerated", "unsupportedByCategory"
+      ],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "safe": {"type": "integer", "minimum": 0},
+        "mayTrap": {"type": "integer", "minimum": 0},
+        "contractHolds": {"type": "integer", "minimum": 0},
+        "contractFails": {"type": "integer", "minimum": 0},
+        "undecided": {"type": "integer", "minimum": 0},
+        "unsupported": {"type": "integer", "minimum": 0},
+        "internalErrors": {"type": "integer", "minimum": 0},
+        "compilerGenerated": {"type": "integer", "minimum": 0},
+        "generatedCode": {"type": "integer", "minimum": 0},
+        "plumbing": {"type": "integer", "minimum": 1, "description": "Of unsupported: functions that are plumbing, not logic (property wrappers, dependency injection, view and reducer bodies, @ObservableState setters). Omitted when there are none."},
+        "weakContracts": {"type": "integer", "minimum": 0, "description": "Only with --mutate."},
+        "withAssumptions": {"type": "integer", "minimum": 1, "description": "Of safe and contractHolds: proofs that rest on assumptions about calls with no body (functions with `assumptions`). Omitted when there are none."},
+        "bounded": {"type": "integer", "minimum": 1, "description": "Of undecided: functions proved only for arrays of at most 8 elements (functions with `bounded`). Omitted when there are none."},
+        "unsupportedByCategory": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compileSeconds", "parseSeconds", "verifySeconds", "silBytes"],
+      "properties": {
+        "compileSeconds": {"type": "number", "minimum": 0},
+        "parseSeconds": {"type": "number", "minimum": 0},
+        "verifySeconds": {"type": "number", "minimum": 0},
+        "silBytes": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

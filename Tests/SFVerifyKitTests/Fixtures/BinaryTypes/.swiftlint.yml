@@ -1,0 +1,7 @@
+# Stand-ins for a framework's public API in the shapes SKIE writes (`__Sealed`, `_ObjectiveCType`), built into a
+# binary module by BinaryFixture: the names and the nesting are the point, and no client reads their docs.
+disabled_rules:
+  - type_name
+  - generic_type_name
+  - missing_docs
+  - nesting

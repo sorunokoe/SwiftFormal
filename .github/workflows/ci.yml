@@ -1,0 +1,153 @@
+name: CI
+# Runs on pull requests to main only, and skips drafts. A pull request from a fork waits until the owner approves
+# the run (repository setting, docs/RELEASING.md), so nobody else can spend CI time.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# A newer push to the same pull request cancels the run it makes obsolete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The pinned compiler is Apple Swift 6.4 (docs/guides/compilers.md): Xcode 27.0 (27A266a) on GitHub's `xcode-27`
+# runner image. That image's default Xcode can be newer, so DEVELOPER_DIR selects 27.0 by path.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
+# The fast lane does not need the pinned compiler, so these jobs are meaningful on any recent Swift.
+
+jobs:
+  fast:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      # Mostly swift-syntax. The key includes the toolchain, so a new compiler never reuses old build products.
+      - name: Toolchain version for the cache key
+        id: toolchain
+        run: echo "version=$(swift --version 2>&1 | head -1 | shasum | cut -c1-12)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: build-debug-${{ runner.os }}-${{ steps.toolchain.outputs.version }}-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: build-debug-${{ runner.os }}-${{ steps.toolchain.outputs.version }}-
+      # Warnings are errors, so unused-import access levels and similar drift fail the build (Task Q.3).
+      # The tests build with the same flag, so the lane reuses this build instead of rebuilding without it.
+      - run: swift build --build-tests -Xswiftc -warnings-as-errors
+      - run: Scripts/test-lane.sh fast -Xswiftc -warnings-as-errors
+      # The package without the `Generator` trait (no swift-syntax), as `Scripts/test-lane.sh slow-dev` builds it.
+      - run: swift build --disable-default-traits --scratch-path .build/notraits -Xswiftc -warnings-as-errors
+      - run: Scripts/check-test-inventory.sh
+      - run: python3 Scripts/check-layering.py
+      - run: python3 Scripts/check-sandboxes.py
+      - run: python3 Scripts/check-doc-coverage.py
+      - run: python3 Scripts/check-cli.py
+      - run: python3 Scripts/check-portability.py
+
+  # Quality ratchets (PC-5): lint findings, `try!`, unsafe use, TODOs and the size of the trusted code may not get worse.
+  # Static and cheap: it reads files, it does not build.
+  ratchet:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 Scripts/check-ratchet.py
+
+  # Broken relative links, broken heading anchors, and README snippets that are not copied from Examples/ (Task 9.5).
+  links:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 Scripts/check-links.py
+      - run: python3 Scripts/check-readme-install.py
+
+  # The community files exist, and no private path, token or personal email is checked in outside archive/ (Task 10.3).
+  hygiene:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 Scripts/check-release-hygiene.py
+
+  # Style (Tasks Q.4, Q.5). swift-format owns layout, SwiftLint owns meaning (decision D7); neither is a package dependency.
+  lint:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift-format (ships with the toolchain)
+        run: swift format lint --strict --recursive Sources Tests Examples Benchmarks/Sources Benchmarks/Package.swift Package.swift
+      # SwiftLint is not part of the Swift toolchain. Remove this step if the runner image already has it.
+      - name: Install SwiftLint
+        run: command -v swiftlint || brew install swiftlint
+      - name: SwiftLint (old findings are in the baseline; any new finding fails)
+        run: swiftlint lint --quiet --baseline Scripts/baseline/swiftlint-baseline.json --strict
+
+  # Every example is its own package. The README snippets are copied from them, so a broken example fails CI (Task 9.2).
+  # Scripts/check-examples.sh runs Walk (swift test), Prove (swift run) and the gated package (swift build), then the
+  # README's install lines verbatim (Scripts/check-readme-install.py --run: a release build of the three tools).
+  examples:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: Scripts/check-examples.sh
+
+  # The docs build must have no warnings, so a broken symbol link fails CI (Task 9.3).
+  # swift-docc-plugin is added to the manifest only when SWIFTFORMAL_DOCS is set; normal builds never fetch it.
+  docs:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 30
+    env:
+      SWIFTFORMAL_DOCS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the documentation of every documented target
+        run: |
+          for target in SwiftFormal SwiftFormalTesting SFProve; do
+            swift package generate-documentation --target "$target" --warnings-as-errors
+          done
+
+  api:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the check diffs against the latest release tag, so it needs the history and the tags
+      - run: Scripts/check-api.sh # against the latest release tag
+
+  # iOS is a claim we prove: build every module that Scripts/sandboxes.py marks as iOS, on the iOS Simulator.
+  # The list is the "builds" rows of docs/guides/platforms.md. macOS results never stand in for iOS results.
+  # Not run here: tests on a simulator (docs/guides/platforms.md, "Not verified").
+  ios:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      # One derived-data folder for all schemes, so SwiftFormal and swift-syntax are built once, not once per scheme.
+      - name: Targets that have a scheme
+        run: |
+          # SFProve builds as a dependency of SwiftFormalTesting, which re-exports it.
+          for scheme in SwiftFormal SwiftFormalTesting; do
+            xcodebuild -scheme "$scheme" -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath ".build/ios-dd" build
+          done
+      - name: Targets without a scheme
+        run: |
+          for target in SFCNF SFSAT SFCheck SFBV SFSemantics; do
+            swift build --target "$target" --triple arm64-apple-ios16.0-simulator \
+              --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" --scratch-path .build/ios-spm
+          done

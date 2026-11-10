@@ -1,0 +1,61 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "Play %lld holes" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%lld Löcher spielen" } },
+        "da" : { "stringUnit" : { "state" : "translated", "value" : "Spil %lld huller %@" } }
+      }
+    },
+    "menu.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Menu" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Menü" } }
+      }
+    },
+    "shots" : {
+      "localizations" : {
+        "en" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld shot" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld shots" } }
+        } } },
+        "de" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "Ein Schlag" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld Schläge" } }
+        } } },
+        "da" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "Et slag" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld slag" } }
+        } } }
+      }
+    },
+    "distance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%#@yards@ to go" },
+          "substitutions" : { "yards" : { "argNum" : 1, "formatSpecifier" : "lld", "variations" : { "plural" : {
+            "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg yard" } },
+            "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg yards" } }
+          } } } }
+        },
+        "de" : {
+          "stringUnit" : { "state" : "translated", "value" : "noch %#@yards@" },
+          "substitutions" : { "yards" : { "argNum" : 1, "formatSpecifier" : "lld", "variations" : { "plural" : {
+            "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg Yards" } }
+          } } } }
+        },
+        "da" : {
+          "stringUnit" : { "state" : "translated", "value" : "%#@yards@ tilbage" },
+          "substitutions" : { "yards" : { "argNum" : 1, "formatSpecifier" : "lld", "variations" : { "plural" : {
+            "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg yards" } }
+          } } } }
+        }
+      }
+    },
+    "old.key" : {
+      "extractionState" : "stale",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "old.key" } } }
+    }
+  }
+}

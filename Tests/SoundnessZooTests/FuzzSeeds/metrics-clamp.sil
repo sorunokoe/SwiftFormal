@@ -1,0 +1,101 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public func adder(_ a: UInt8, _ b: UInt8) -> UInt8
+
+public func adder_ensures(_ a: UInt8, _ b: UInt8, _ r: UInt8) -> Bool
+
+public func clamp(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Int8
+
+public func clamp_requires(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Bool
+
+public func clamp_ensures(_ x: Int8, _ lo: Int8, _ hi: Int8, _ r: Int8) -> Bool
+
+public func discount(_ price: UInt8, _ percent: UInt8) -> UInt8
+
+public func discount_ensures(_ price: UInt8, _ percent: UInt8, _ r: UInt8) -> Bool
+
+public func popcount8(_ x: UInt8) -> UInt8
+
+public func popcount8_ensures(_ x: UInt8, _ r: UInt8) -> Bool
+
+public func cellIndex(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Int8
+
+public func cellIndex_requires(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Bool
+
+public func cellIndex_ensures(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8, _ r: Int8) -> Bool
+
+public func mulCommutes32(_ a: Int32, _ b: Int32) -> Int32
+
+public func mulCommutes32_ensures(_ a: Int32, _ b: Int32, _ r: Int32) -> Bool
+
+sil @$s7Kernels5clampys4Int8VAD_A2DtF : $@convention(thin) (Int8, Int8, Int8) -> Int8 {
+bb0(%0 : $Int8, %1 : $Int8, %2 : $Int8):
+  debug_value %0, let, name "x", argno 1          // id: %3
+  debug_value %1, let, name "lo", argno 2         // id: %4
+  debug_value %2, let, name "hi", argno 3         // id: %5
+  %6 = struct_extract %0, #Int8._value            // user: %8
+  %7 = struct_extract %1, #Int8._value            // user: %8
+  %8 = builtin "cmp_slt_Int8"(%6, %7) : $Builtin.Int1 // user: %9
+  cond_br %8, bb1, bb2                            // id: %9
+
+bb1:                                              // Preds: bb0
+  br bb5(%1)                                      // id: %10
+
+bb2:                                              // Preds: bb0
+  %11 = struct_extract %2, #Int8._value           // user: %13
+  %12 = struct_extract %0, #Int8._value           // user: %13
+  %13 = builtin "cmp_slt_Int8"(%11, %12) : $Builtin.Int1 // user: %14
+  cond_br %13, bb3, bb4                           // id: %14
+
+bb3:                                              // Preds: bb2
+  br bb5(%2)                                      // id: %15
+
+bb4:                                              // Preds: bb2
+  br bb5(%0)                                      // id: %16
+
+bb5(%17 : $Int8):                                 // Preds: bb4 bb3 bb1
+  return %17                                      // id: %18
+}
+
+sil @$s7Kernels13clamp_ensuresySbs4Int8V_A3DtF : $@convention(thin) (Int8, Int8, Int8, Int8) -> Bool {
+bb0(%0 : $Int8, %1 : $Int8, %2 : $Int8, %3 : $Int8):
+  debug_value %0, let, name "x", argno 1          // id: %4
+  debug_value %1, let, name "lo", argno 2         // id: %5
+  debug_value %2, let, name "hi", argno 3         // id: %6
+  debug_value %3, let, name "r", argno 4          // id: %7
+  %8 = struct_extract %3, #Int8._value            // user: %10
+  %9 = struct_extract %1, #Int8._value            // user: %10
+  %10 = builtin "cmp_sge_Int8"(%8, %9) : $Builtin.Int1 // user: %11
+  cond_br %10, bb1, bb2                           // id: %11
+
+bb1:                                              // Preds: bb0
+  %12 = struct_extract %2, #Int8._value           // user: %14
+  %13 = struct_extract %3, #Int8._value           // user: %14
+  %14 = builtin "cmp_sge_Int8"(%12, %13) : $Builtin.Int1 // user: %15
+  %15 = struct $Bool (%14)                        // user: %16
+  br bb3(%15)                                     // id: %16
+
+bb2:                                              // Preds: bb0
+  %17 = integer_literal $Builtin.Int1, 0          // user: %18
+  %18 = struct $Bool (%17)                        // user: %19
+  br bb3(%18)                                     // id: %19
+
+bb3(%20 : $Bool):                                 // Preds: bb2 bb1
+  return %20                                      // id: %21
+}
+
+sil private [transparent] @$s7Kernels13clamp_ensuresySbs4Int8V_A3DtFSbyKXEfu_ : $@convention(thin) (Int8, Int8) -> (Bool, @error any Error) {
+bb0(%0 : @closureCapture $Int8, %1 : @closureCapture $Int8):
+  debug_value undef : $any Error, var, name "$error", argno 1 // id: %2
+  debug_value %0, let, name "r", argno 2          // id: %3
+  debug_value %1, let, name "hi", argno 3         // id: %4
+  %5 = struct_extract %1, #Int8._value            // user: %7
+  %6 = struct_extract %0, #Int8._value            // user: %7
+  %7 = builtin "cmp_sge_Int8"(%5, %6) : $Builtin.Int1 // user: %8
+  %8 = struct $Bool (%7)                          // user: %9
+  return %8                                       // id: %9
+}

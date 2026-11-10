@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+**/.build/
+.swiftpm/
+**/.artifacts/
+**/__pycache__/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+Benchmarks/Package.resolved

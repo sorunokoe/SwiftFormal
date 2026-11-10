@@ -1,0 +1,4 @@
+/* The forward tee was never translated, and the format reads a third argument. */
+"tee.back" = "Bagerste tee";
+"tee.middle" = "Midterste tee";
+"holes.played" = "%1$d af %2$d (%3$d)";

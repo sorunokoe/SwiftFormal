@@ -1,0 +1,39 @@
+import Dispatch
+/// Prototype: workers take contiguous index ranges, build their own inputs with `domain.element`, run the function and a
+/// stateless check, and report the lowest failing index. The caller only merges counts. (Not the shipped API.)
+public func workerWalk<Input, Output>(
+    _ function: @escaping @Sendable (Input) -> Output, over domain: Domain<Input>, threads: Int, chunk: Int = 65536,
+    check: @escaping @Sendable (Input, Output) -> Bool
+) -> (evaluated: Int, firstFailure: Int?) {
+    let shared = Shared()
+    let element = domain.element
+    nonisolated(unsafe) let el = element
+    let count = domain.count
+    DispatchQueue.concurrentPerform(iterations: threads) { _ in
+        while true {
+            shared.lock.lock(); let start = shared.next; shared.next += chunk; let stop = shared.lowest; shared.lock.unlock()
+            if start >= count || start > stop { return }
+            let end = min(count, start + chunk)
+            var i = start
+            while i < end {
+                let input = el(i)
+                if !check(input, function(input)) {
+                    shared.lock.lock(); shared.lowest = min(shared.lowest, i); shared.lock.unlock(); return
+                }
+                i += 1
+            }
+        }
+    }
+    let first = shared.lowest == Int.max ? nil : shared.lowest
+    return (first.map { $0 + 1 } ?? count, first)
+}
+final class NSLockish: @unchecked Sendable {
+    private var m = pthread_mutex_t()
+    init() { pthread_mutex_init(&m, nil) }
+    func lock() { pthread_mutex_lock(&m) }
+    func unlock() { pthread_mutex_unlock(&m) }
+}
+#if canImport(Darwin)
+import Darwin
+#endif
+final class Shared: @unchecked Sendable { var next = 0; var lowest = Int.max; let lock = NSLockish(); init() {} }

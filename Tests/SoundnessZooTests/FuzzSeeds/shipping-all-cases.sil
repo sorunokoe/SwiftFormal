@@ -1,0 +1,74 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public enum Speed : CaseIterable, Sendable {
+  case standard, express, overnight
+  typealias AllCases = [Speed]
+  @_semantics("derived_enum_equals") @_implements(Equatable, ==(_:_:)) static func __derived_enum_equals(_ a: Speed, _ b: Speed) -> Bool
+  nonisolated static var allCases: [Speed] { get }
+  func hash(into hasher: inout Hasher)
+  var hashValue: Int { get }
+}
+
+public func label(for speed: Speed) -> String
+
+sil @$s8Shipping5SpeedO8allCasesSayACGvgZ : $@convention(method) (@thin Speed.Type) -> @owned Array<Speed> {
+bb0(%0 : $@thin Speed.Type):
+  debug_value %0, let, name "self", argno 1       // id: %1
+  %2 = integer_literal $Builtin.Word, 3           // user: %4
+  %3 = function_ref @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %4
+  %4 = apply %3<Speed>(%2) : $@convention(thin) <τ_0_0> (Builtin.Word) -> (@owned Array<τ_0_0>, Builtin.RawPointer) // user: %5
+  %5 = tuple_extract %4, 0                        // users: %6, %22
+  %6 = struct_extract %5, #Array._buffer          // user: %7
+  %7 = struct_extract %6, #_ArrayBuffer._storage  // user: %8
+  %8 = struct_extract %7, #_BridgeStorage.rawValue // user: %9
+  %9 = unchecked_ref_cast %8 to $__ContiguousArrayStorageBase // user: %10
+  %10 = ref_tail_addr %9, $Speed                  // users: %12, %18, %14
+  %11 = enum $Speed, #Speed.standard!enumelt      // user: %12
+  store %11 to %10                                // id: %12
+  %13 = integer_literal $Builtin.Word, 1          // user: %14
+  %14 = index_addr %10, %13                       // user: %16
+  %15 = enum $Speed, #Speed.express!enumelt       // user: %16
+  store %15 to %14                                // id: %16
+  %17 = integer_literal $Builtin.Word, 2          // user: %18
+  %18 = index_addr %10, %17                       // user: %20
+  %19 = enum $Speed, #Speed.overnight!enumelt     // user: %20
+  store %19 to %18                                // id: %20
+  %21 = function_ref @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // user: %22
+  %22 = apply %21<Speed>(%5) : $@convention(thin) <τ_0_0> (@owned Array<τ_0_0>) -> @owned Array<τ_0_0> // user: %23
+  return %22                                      // id: %23
+}
+
+sil shared [export_implementation] [readnone] [_semantics "array.finalize_intrinsic"] @$ss27_finalizeUninitializedArrayySayxGABnlF : $@convention(thin) <Element> (@owned Array<Element>) -> @owned Array<Element> {
+[%0: escape! v** => %r.v**, escape! v**.c*.v** => %r.v**.c*.v**]
+bb0(%0 : $Array<Element>):
+  %1 = alloc_stack [var_decl] $Array<Element>     // users: %5, %2, %6, %4
+  store %0 to %1                                  // id: %2
+  %3 = function_ref @$sSa12_endMutationyyF : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> () // user: %4
+  %4 = apply %3<Element>(%1) : $@convention(method) <τ_0_0> (@inout Array<τ_0_0>) -> ()
+  %5 = load %1                                    // user: %7
+  dealloc_stack %1                                // id: %6
+  return %5                                       // id: %7
+}
+
+sil shared [export_implementation] [_semantics "array.end_mutation"] @$sSa12_endMutationyyF : $@convention(method) <Element> (@inout Array<Element>) -> () {
+[%0: noescape! **, read s0.s0.s0.v**, write v**]
+[global: ]
+bb0(%0 : $*Array<Element>):
+  %1 = struct_element_addr %0, #Array._buffer     // user: %2
+  %2 = struct_element_addr %1, #_ArrayBuffer._storage // user: %3
+  %3 = struct_element_addr %2, #_BridgeStorage.rawValue // user: %4
+  %4 = load %3                                    // user: %5
+  %5 = end_cow_mutation %4                        // user: %6
+  %6 = struct $_BridgeStorage<__ContiguousArrayStorageBase> (%5) // user: %7
+  %7 = struct $_ArrayBuffer<Element> (%6)         // user: %8
+  %8 = struct $Array<Element> (%7)                // user: %9
+  store %8 to %0                                  // id: %9
+  %10 = tuple ()                                  // user: %11
+  return %10                                      // id: %11
+}
+
+sil [heuristic_always_inline] [_semantics "array.uninitialized_intrinsic"] @$ss27_allocateUninitializedArrayySayxG_BptBwlF : $@convention(thin) <Element> (Builtin.Word) -> (@owned Array<Element>, Builtin.RawPointer)

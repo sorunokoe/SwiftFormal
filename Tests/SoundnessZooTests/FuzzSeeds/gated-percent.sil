@@ -1,0 +1,128 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public func cellIndex(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Int8
+
+public func cellIndex_requires(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Bool
+
+public func cellIndex_ensures(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8, _ r: Int8) -> Bool
+
+public func percent(_ part: UInt16, _ whole: UInt16) -> UInt16
+
+sil @$s7Kernels7percentys6UInt16VAD_ADtF : $@convention(thin) (UInt16, UInt16) -> UInt16 {
+bb0(%0 : $UInt16, %1 : $UInt16):
+  debug_value %0, let, name "part", argno 1       // id: %2
+  debug_value %1, let, name "whole", argno 2      // id: %3
+  %4 = integer_literal $Builtin.Int16, 0          // user: %6
+  %5 = struct_extract %1, #UInt16._value          // user: %6
+  %6 = builtin "cmp_eq_Int16"(%5, %4) : $Builtin.Int1 // user: %7
+  cond_br %6, bb1, bb2                            // id: %7
+
+bb1:                                              // Preds: bb0
+  %8 = integer_literal $Builtin.Int16, 0          // user: %9
+  %9 = struct $UInt16 (%8)                        // user: %10
+  br bb10(%9)                                     // id: %10
+
+bb2:                                              // Preds: bb0
+  %11 = struct_extract %0, #UInt16._value         // user: %13
+  debug_step                                      // id: %12
+  %13 = builtin "zextOrBitCast_Int16_Int64"(%11) : $Builtin.Int64 // user: %14
+  %14 = builtin "truncOrBitCast_Int64_Int32"(%13) : $Builtin.Int32 // user: %17
+  %15 = integer_literal $Builtin.Int32, 100       // user: %17
+  %16 = integer_literal $Builtin.Int1, -1         // user: %17
+  %17 = builtin "umul_with_overflow_Int32"(%14, %15, %16) : $(Builtin.Int32, Builtin.Int1) // users: %19, %18
+  %18 = tuple_extract %17, 0                      // user: %50
+  %19 = tuple_extract %17, 1                      // user: %20
+  cond_fail %19, "arithmetic overflow"            // id: %20
+  %21 = struct_extract %1, #UInt16._value         // user: %23
+  debug_step                                      // id: %22
+  %23 = builtin "zextOrBitCast_Int16_Int64"(%21) : $Builtin.Int64 // user: %24
+  %24 = builtin "truncOrBitCast_Int64_Int32"(%23) : $Builtin.Int32 // users: %26, %50
+  %25 = integer_literal $Builtin.Int32, 0         // user: %26
+  %26 = builtin "cmp_eq_Int32"(%24, %25) : $Builtin.Int1 // user: %28
+  %27 = integer_literal $Builtin.Int1, 0          // user: %28
+  %28 = builtin "int_expect_Int1"(%26, %27) : $Builtin.Int1 // user: %29
+  cond_br %28, bb3, bb4                           // id: %29
+
+bb3:                                              // Preds: bb2
+  %30 = string_literal utf8 "Division by zero"    // user: %32
+  %31 = integer_literal $Builtin.Word, 16         // user: %34
+  %32 = builtin "ptrtoint_Word"(%30) : $Builtin.Word // user: %34
+  %33 = integer_literal $Builtin.Int8, 2          // users: %44, %38, %34
+  %34 = struct $StaticString (%32, %31, %33)      // user: %48
+  %35 = string_literal utf8 "Swift/arm64e-apple-macos.swiftinterface" // user: %37
+  %36 = integer_literal $Builtin.Word, 39         // user: %38
+  %37 = builtin "ptrtoint_Word"(%35) : $Builtin.Word // user: %38
+  %38 = struct $StaticString (%37, %36, %33)      // user: %48
+  %39 = integer_literal $Builtin.Int64, 42957     // user: %40
+  %40 = struct $UInt (%39)                        // user: %48
+  %41 = string_literal utf8 "Fatal error"         // user: %43
+  %42 = integer_literal $Builtin.Word, 11         // user: %44
+  %43 = builtin "ptrtoint_Word"(%41) : $Builtin.Word // user: %44
+  %44 = struct $StaticString (%43, %42, %33)      // user: %48
+  %45 = integer_literal $Builtin.Int32, 1         // user: %46
+  %46 = struct $UInt32 (%45)                      // user: %48
+  %47 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %48
+  %48 = apply %47(%44, %34, %38, %40, %46) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %49
+
+bb4:                                              // Preds: bb2
+  %50 = builtin "udiv_Int32"(%18, %24) : $Builtin.Int32 // users: %85, %71, %54, %51
+  %51 = struct $UInt32 (%50)                      // user: %52
+  debug_value %51, let, name "value"              // id: %52
+  %53 = integer_literal $Builtin.Int32, 100       // user: %54
+  %54 = builtin "cmp_ult_Int32"(%53, %50) : $Builtin.Int1 // user: %55
+  cond_br %54, bb5, bb6                           // id: %55
+
+bb5:                                              // Preds: bb4
+  %56 = integer_literal $Builtin.Int16, 100       // user: %57
+  %57 = struct $UInt16 (%56)                      // user: %58
+  br bb9(%57)                                     // id: %58
+
+bb6:                                              // Preds: bb4
+  %59 = string_literal utf8 "Not enough bits to represent the passed value" // user: %61
+  %60 = integer_literal $Builtin.Word, 45         // user: %63
+  %61 = builtin "ptrtoint_Word"(%59) : $Builtin.Word // user: %63
+  %62 = integer_literal $Builtin.Int8, 2          // users: %78, %67, %63
+  %63 = struct $StaticString (%61, %60, %62)      // user: %82
+  %64 = string_literal utf8 "Swift/arm64e-apple-macos.swiftinterface" // user: %66
+  %65 = integer_literal $Builtin.Word, 39         // user: %67
+  %66 = builtin "ptrtoint_Word"(%64) : $Builtin.Word // user: %67
+  %67 = struct $StaticString (%66, %65, %62)      // user: %82
+  %68 = integer_literal $Builtin.Int64, 13743     // user: %69
+  %69 = struct $UInt (%68)                        // user: %82
+  %70 = integer_literal $Builtin.Int32, 65535     // user: %71
+  %71 = builtin "cmp_ult_Int32"(%70, %50) : $Builtin.Int1 // user: %73
+  %72 = integer_literal $Builtin.Int1, 0          // user: %73
+  %73 = builtin "int_expect_Int1"(%71, %72) : $Builtin.Int1 // user: %74
+  cond_br %73, bb7, bb8                           // id: %74
+
+bb7:                                              // Preds: bb6
+  %75 = string_literal utf8 "Fatal error"         // user: %77
+  %76 = integer_literal $Builtin.Word, 11         // user: %78
+  %77 = builtin "ptrtoint_Word"(%75) : $Builtin.Word // user: %78
+  %78 = struct $StaticString (%77, %76, %62)      // user: %82
+  %79 = integer_literal $Builtin.Int32, 1         // user: %80
+  %80 = struct $UInt32 (%79)                      // user: %82
+  %81 = function_ref @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never // user: %82
+  %82 = apply %81(%78, %63, %67, %69, %80) : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never
+  unreachable                                     // id: %83
+
+bb8:                                              // Preds: bb6
+  debug_step                                      // id: %84
+  %85 = builtin "zextOrBitCast_Int32_Int64"(%50) : $Builtin.Int64 // user: %86
+  %86 = builtin "truncOrBitCast_Int64_Int16"(%85) : $Builtin.Int16 // user: %87
+  %87 = struct $UInt16 (%86)                      // user: %88
+  br bb9(%87)                                     // id: %88
+
+bb9(%89 : $UInt16):                               // Preds: bb8 bb5
+  br bb10(%89)                                    // id: %90
+
+bb10(%91 : $UInt16):                              // Preds: bb9 bb1
+  return %91                                      // id: %92
+}
+
+sil [noinline] [_semantics "programtermination_point"] @$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_A2HSus6UInt32VtF : $@convention(thin) (StaticString, StaticString, StaticString, UInt, UInt32) -> Never

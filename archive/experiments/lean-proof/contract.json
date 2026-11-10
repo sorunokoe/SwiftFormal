@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "symbol": "$s13BridgeFixture15clampedDiscountys5Int64VAD_ADtF",
+  "requires": "nonnegative-int64-pair",
+  "ensures": "exact-clamped-subtraction",
+  "witness": ["0", "0"]
+}

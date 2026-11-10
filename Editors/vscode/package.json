@@ -1,0 +1,95 @@
+{
+  "name": "swiftformal",
+  "displayName": "SwiftFormal",
+  "description": "Proves Swift functions on save with SwiftFormal: verdicts as code lenses, diagnostics, hovers and Test Explorer items, beside the Swift extension.",
+  "version": "0.1.0",
+  "publisher": "swiftformal",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing"
+  ],
+  "activationEvents": [
+    "onLanguage:swift",
+    "workspaceContains:**/swiftformal.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "swiftformal.checkNow",
+        "title": "SwiftFormal: Check Now"
+      },
+      {
+        "command": "swiftformal.cancel",
+        "title": "SwiftFormal: Stop the Running Check"
+      },
+      {
+        "command": "swiftformal.restart",
+        "title": "SwiftFormal: Restart the Language Server"
+      }
+    ],
+    "configuration": {
+      "title": "SwiftFormal",
+      "properties": {
+        "swiftformal.path": {
+          "type": "string",
+          "default": "swiftformal",
+          "markdownDescription": "The `swiftformal` executable (a path, or a name on `PATH`). The extension runs `swiftformal lsp`."
+        },
+        "swiftformal.checkOn": {
+          "type": "string",
+          "enum": [
+            "save",
+            "never"
+          ],
+          "default": "save",
+          "markdownDescription": "When to check: on `save`, or `never` (only with **SwiftFormal: Check Now**). Edits never start a check; they turn the verdicts they may change into `⚠ stale`."
+        },
+        "swiftformal.scan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "`--scan` targets as `<package-dir>:<target>`, relative to the workspace folder. Empty: the target that holds the saved file. A `swiftformal.json` in the workspace folder overrides this."
+        },
+        "swiftformal.tests": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "`--tests` target with the walks (`Prove(it:over:)`), as `<package-dir>:<test-target>`. Empty: no walks."
+        },
+        "swiftformal.walks": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Run the walks of `swiftformal.tests` on each check."
+        },
+        "swiftformal.budget": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "markdownDescription": "The prover's conflict budget per function (`--budget`). Empty: SwiftFormal's default."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p ."
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "~1.82.0",
+    "typescript": "^5.4.0"
+  }
+}

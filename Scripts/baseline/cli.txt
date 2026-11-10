@@ -1,0 +1,304 @@
+sfverify (no arguments)
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify — prove that Swift functions cannot trap, and check plain-Swift contracts, from the compile' sha=cc211f7000aa
+sfverify --help
+  exit 0
+  stdout 'sfverify — prove that Swift functions cannot trap, and check plain-Swift contracts, from the compile' sha=cc211f7000aa
+  stderr '' sha=e3b0c44298fc
+sfverify -h
+  exit 0
+  stdout 'sfverify — prove that Swift functions cannot trap, and check plain-Swift contracts, from the compile' sha=cc211f7000aa
+  stderr '' sha=e3b0c44298fc
+sfverify --bogus
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'unknown option --bogus' sha=500e59b487d8
+sfverify --budget
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--budget needs a value' sha=fe183ceadcf9
+sfverify --budget many Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--budget needs a positive number of conflicts' sha=d62fef88d4dd
+sfverify --budget 0 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--budget needs a positive number of conflicts' sha=d62fef88d4dd
+sfverify --budget -5 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--budget needs a positive number of conflicts' sha=d62fef88d4dd
+sfverify --time-limit 0 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--time-limit needs a number of seconds' sha=777962bf7177
+sfverify --budget=many Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--budget needs a positive number of conflicts' sha=d62fef88d4dd
+sfverify --budget=7 --module=Kernels Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: COMPILER FAILED' sha=95dcb029bc0b
+sfverify --stats Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: warning: --stats has no effect without --json' sha=4b3f2c918425
+sfverify --paranoid Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: COMPILER FAILED' sha=95dcb029bc0b
+sfverify --stamp out.txt Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: warning: --stamp and --time-limit only apply with --gate' sha=996813ab868f
+sfverify --json --xcode Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: warning: --xcode is ignored with --json' sha=36e911193336
+sfverify --build --package Examples/GatedPackage
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--build needs --target' sha=a449f0a38d54
+sfverify --package
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--package needs a value' sha=ba77726dc953
+sfverify --config fast Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--config needs debug, release or both, not fast' sha=67edd9dd19e9
+sfverify --config
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--config needs a value' sha=ee093f1aa7ab
+sfverify --cross-check gcc Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--cross-check needs llvm or llvm-strict, not gcc' sha=9ba5f7b19999
+sfverify --format pdf Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--format needs text, json, xcode, sarif or github, not pdf' sha=91adc387bf86
+sfverify --format
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--format needs a value' sha=14277bcf8a9d
+sfverify --emit-tests
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--emit-tests needs a value' sha=8d4d026285c6
+sfverify --gate --confirm Examples/does-not-exist.swift
+  exit 0
+  stdout 'sfverify: gate passed: 0 of 0 gated functions proved (N ms)' sha=c631dec4ea6f
+  stderr 'sfverify: warning: --emit-tests and --confirm are ignored with --gate' sha=5cd21e838fe3
+sfverify --format=sarif --json Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: warning: --format sarif is ignored with --json or --xcode' sha=d184f171c3a4
+sfverify --package Examples/GatedPackage --target Bogus
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr "sfverify: no target 'Bogus' in Examples/GatedPackage; its targets under Sources/ are: Kernels" sha=401720b67e51
+sfverify --build-log build.log
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--build-log needs --target' sha=d94e1442be10
+sfverify --build --build-log build.log --target Kernels
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--build and --build-log exclude each other: --build-log reads a build that already ran' sha=45abecdc30d9
+sfverify --cache-dir out Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: warning: --cache-dir only applies with --build-log' sha=25384eba4213
+sfverify --at Examples/does-not-exist.swift:3 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'sfverify: --at: no file Examples/does-not-exist.swift' sha=fe646252cac6
+sfverify --at Package.swift Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr "sfverify: --at needs <file>:<line>, not 'Package.swift'" sha=f828c6e41a0a
+sfverify --at=Package.swift:0 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr "sfverify: --at needs <file>:<line>, not 'Package.swift:0'" sha=9a8daade34fe
+sfverify --at Package.swift:3 --gate Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--at Package.swift:3 and --gate exclude each other: the gate proves every gated function' sha=982bfedae05c
+sfverify --symbol f --only g Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--symbol f and --only exclude each other: --at and --symbol pick exactly one function' sha=d8ff4387ef71
+sfverify --symbol f --at Package.swift:3 Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'give one --at or --symbol' sha=7b3de4d1bf88
+sfverify --proof-cache out --no-proof-cache Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--proof-cache and --no-proof-cache exclude each other' sha=59c3dee21219
+sfverify --proof-cache
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--proof-cache needs a value' sha=b7791372716d
+sfverify --gate --proof-cache=out Examples/does-not-exist.swift
+  exit 0
+  stdout 'sfverify: gate passed: 0 of 0 gated functions proved (N ms)' sha=c631dec4ea6f
+  stderr 'sfverify: warning: --proof-cache is ignored with --gate' sha=c9c51ed1b399
+swiftformal --help
+  exit 0
+  stdout 'swiftformal — prove with logic first, for every input; walks check the promises the tests state.' sha=a82a744d9eaa
+  stderr '' sha=e3b0c44298fc
+swiftformal check --format pdf
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--format needs text, json, xcode, sarif or github, not pdf' sha=91adc387bf86
+swiftformal check --format
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--format needs a value' sha=14277bcf8a9d
+swiftformal check --at Package.swift:3
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'check needs at least one --scan <package-dir>:<target>, or --build-log <file> --target <name>' sha=6ad2128049dd
+swiftformal check --at Package.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr "swiftformal: --at needs <file>:<line>, not 'Package.swift'" sha=19099152e6bc
+swiftformal check --json --xcode --scan
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--scan needs a value' sha=2574f79ee02a
+swiftformal check --no-proof-cache --proof-cache out --scan Examples/does-not-exist:X
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--proof-cache and --no-proof-cache exclude each other' sha=59c3dee21219
+swiftformal check --jobs 0 --scan Examples/does-not-exist:X
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--jobs needs a number of at least 1' sha=c36378359652
+swiftformal check --jobs many
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--jobs needs a number of at least 1' sha=c36378359652
+swiftformal check --jobs
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--jobs needs a value' sha=1b3d72e59b21
+swiftformal check --gate --help
+  exit 0
+  stdout 'swiftformal check --gate — the build-time check: prove every promise with logic, before the tests ru' sha=637a70f79f2c
+  stderr '' sha=e3b0c44298fc
+swiftformal check --gate --scan Examples/does-not-exist:X
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--scan does not apply with --gate (the gate proves @Verify promises and runs no walks)' sha=f3a34669dc3b
+swiftformal check --gate --build-log build.log
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--build-log needs exactly one --target' sha=96384d880e61
+swiftformal check --gate --scratch-path out
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--scratch-path and --cache-dir need --build-log' sha=cafe2961f1aa
+swiftformal check --gate --no-proof-cache --proof-cache out
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--proof-cache and --no-proof-cache exclude each other' sha=59c3dee21219
+swiftformal check --gate --package Examples/does-not-exist
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal: error: no Package.swift in <ROOT>/Examples/does-not-exist; pass --package <dir>, or --b' sha=025bfd42c26f
+swiftformal check --gate --no-opaque-calls --package Examples/does-not-exist
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal: error: no Package.swift in <ROOT>/Examples/does-not-exist; pass --package <dir>, or --b' sha=025bfd42c26f
+swiftformal check --format sarif --json --scan Examples/does-not-exist:X
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal: warning: --format sarif is ignored with --json or --xcode' sha=f10c20774893
+swiftformal check --emit-tests
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--emit-tests needs a value' sha=8d4d026285c6
+swiftformal check --build-log build.log
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--build-log and --target go together: the log of a build, and the target it compiled' sha=0c26068a6eac
+swiftformal check --cache-dir out --scan Examples/does-not-exist:X
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--scratch-path and --cache-dir need --build-log' sha=cafe2961f1aa
+swiftformal verify --help
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal verify was removed: run `swiftformal check --gate` (the same options and exit codes)' sha=1cd98ab26ec4
+swiftformal scan --help
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal scan was removed: run `swiftformal check --scan <package-dir>:<target>` (--format json|x' sha=3e1acfd9a45f
+swiftformal gen
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal gen was removed: walk a function in a test with `Prove(it: …, over: …) { … }` (SwiftForm' sha=0ba91d3d4ea4
+swiftformal doctor --help
+  exit 0
+  stdout 'swiftformal doctor — check the setup, and say how to fix what is wrong.' sha=2aa70e977068
+  stderr '' sha=e3b0c44298fc
+swiftformal doctor --bogus
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'unknown option --bogus' sha=81de651419c8
+swiftformal doctor --package
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr '--package needs a value' sha=ba77726dc953
+swiftformal doctor --package Examples/does-not-exist
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'swiftformal: no Package.swift in Examples/does-not-exist' sha=0a49519f7c51
+swiftformal lsp --help
+  exit 0
+  stdout 'swiftformal lsp — a language server that proves on save, beside sourcekit-lsp (it never replaces it)' sha=2874fa276d86
+  stderr '' sha=e3b0c44298fc
+swiftformal lsp --tcp
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'unknown option --tcp' sha=5d9fa172d21e
+swiftformal strings --help
+  exit 0
+  stdout 'swiftformal strings — check localization catalogues; no build and no solver.' sha=980506bc0b91
+  stderr '' sha=e3b0c44298fc
+sfgen (no arguments)
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'usage: sfgen symbols|generate|prune|domains ...' sha=f28166b91ba7
+sfgen frobnicate
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'unknown command frobnicate' sha=5c9e30fa9f57
+sfgen generate
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'missing --out' sha=4a3ce2f1eb9a
+sfgen prune
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'missing --generated' sha=934b7ef3c539
+sfgen prune --generated Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'cannot read Examples/does-not-exist.swift' sha=080349d7524f
+sfgen domains
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'missing --out' sha=4a3ce2f1eb9a
+sfgen domains --symbols Examples/does-not-exist.swift --out Examples/does-not-exist.swift
+  exit 2
+  stdout '' sha=e3b0c44298fc
+  stderr 'no such path: Examples/does-not-exist.swift' sha=60facdf5b924

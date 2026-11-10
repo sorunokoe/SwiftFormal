@@ -1,0 +1,32 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "Base-arm64-apple-macosx-debug.module": ["<Base-arm64-apple-macosx-debug.module>"]
+  "Kern-arm64-apple-macosx-debug.module": ["<Kern-arm64-apple-macosx-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<Base-arm64-apple-macosx-debug.module>","<Kern-arm64-apple-macosx-debug.module>"]
+  "test": ["<Base-arm64-apple-macosx-debug.module>","<Kern-arm64-apple-macosx-debug.module>"]
+default: "main"
+nodes:
+  "/fixture/pkg/Sources/Base/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/fixture/pkg/Sources/Kern/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "C.Base-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/fixture/pkg/Sources/Base/Base.swift","/fixture/pkg/.build-native/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Base.build/sources"]
+    outputs: ["/fixture/pkg/.build-native/arm64-apple-macosx/debug/Base.build/Base.swift.o","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules/Base.swiftmodule"]
+    description: "Compiling Swift Module 'Base' (1 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","Base","-emit-dependencies","-emit-module","-emit-module-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules/Base.swiftmodule","-output-file-map","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Base.build/output-file-map.json","-parse-as-library","-incremental","-c","@/fixture/pkg/.build-native/arm64-apple-macosx/debug/Base.build/sources","-I","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j14","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Base.build/include/Base-Swift.h","-swift-version","6","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","pkg"]
+
+  "C.Kern-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/fixture/pkg/Sources/Kern/Kern.swift","/fixture/pkg/.build-native/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules/Base.swiftmodule","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Kern.build/sources"]
+    outputs: ["/fixture/pkg/.build-native/arm64-apple-macosx/debug/Kern.build/Kern.swift.o","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules/Kern.swiftmodule"]
+    description: "Compiling Swift Module 'Kern' (1 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","Kern","-emit-dependencies","-emit-module","-emit-module-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules/Kern.swiftmodule","-output-file-map","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Kern.build/output-file-map.json","-parse-as-library","-incremental","-c","@/fixture/pkg/.build-native/arm64-apple-macosx/debug/Kern.build/sources","-I","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j14","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/fixture/pkg/.build-native/arm64-apple-macosx/debug/Kern.build/include/Kern-Swift.h","-swift-version","6","-DKERN_FLAG","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","pkg"]

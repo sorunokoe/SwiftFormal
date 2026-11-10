@@ -1,0 +1,60 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public enum Speed : CaseIterable, Sendable {
+  case standard, express, overnight
+  typealias AllCases = [Speed]
+  @_semantics("derived_enum_equals") @_implements(Equatable, ==(_:_:)) static func __derived_enum_equals(_ a: Speed, _ b: Speed) -> Bool
+  nonisolated static var allCases: [Speed] { get }
+  func hash(into hasher: inout Hasher)
+  var hashValue: Int { get }
+}
+
+public func label(for speed: Speed) -> String
+
+sil @$s8Shipping5label3forSSAA5SpeedO_tF : $@convention(thin) (Speed) -> @owned String {
+bb0(%0 : $Speed):
+  debug_value %0, let, name "speed", argno 1      // id: %1
+  %2 = alloc_stack $String                        // users: %28, %26, %18, %10, %29
+  switch_enum %0, case #Speed.standard!enumelt: bb1, case #Speed.express!enumelt: bb2, case #Speed.overnight!enumelt: bb3 // id: %3
+
+bb1:                                              // Preds: bb0
+  %4 = string_literal utf8 "Standard (3-5 days)"  // user: %9
+  %5 = integer_literal $Builtin.Word, 19          // user: %9
+  %6 = integer_literal $Builtin.Int1, -1          // user: %9
+  %7 = metatype $@thin String.Type                // user: %9
+  %8 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %9
+  %9 = apply %8(%4, %5, %6, %7) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %10
+  store %9 to %2                                  // id: %10
+  br bb4                                          // id: %11
+
+bb2:                                              // Preds: bb0
+  %12 = string_literal utf8 "Express (1-2 days)"  // user: %17
+  %13 = integer_literal $Builtin.Word, 18         // user: %17
+  %14 = integer_literal $Builtin.Int1, -1         // user: %17
+  %15 = metatype $@thin String.Type               // user: %17
+  %16 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %17
+  %17 = apply %16(%12, %13, %14, %15) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %18
+  store %17 to %2                                 // id: %18
+  br bb4                                          // id: %19
+
+bb3:                                              // Preds: bb0
+  %20 = string_literal utf8 "Overnight"           // user: %25
+  %21 = integer_literal $Builtin.Word, 9          // user: %25
+  %22 = integer_literal $Builtin.Int1, -1         // user: %25
+  %23 = metatype $@thin String.Type               // user: %25
+  %24 = function_ref @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %25
+  %25 = apply %24(%20, %21, %22, %23) : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String // user: %26
+  store %25 to %2                                 // id: %26
+  br bb4                                          // id: %27
+
+bb4:                                              // Preds: bb3 bb2 bb1
+  %28 = load %2                                   // user: %30
+  dealloc_stack %2                                // id: %29
+  return %28                                      // id: %30
+}
+
+sil [heuristic_always_inline] [readonly] [_semantics "string.makeUTF8"] @$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC : $@convention(method) (Builtin.RawPointer, Builtin.Word, Builtin.Int1, @thin String.Type) -> @owned String

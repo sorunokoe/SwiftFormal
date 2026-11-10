@@ -1,0 +1,43 @@
+{
+ "_note": "Deterministic prover cost per kernel (Scripts/metrics.py). Re-record with --record in the change that legitimately alters it, and explain why in the commit message.",
+ "conflictBudget": 20000,
+ "functions": {
+  "adder(_:_:)": {
+   "cnfClauses": 128,
+   "cnfVariables": 54,
+   "solverConflicts": 0,
+   "status": "contractHolds"
+  },
+  "cellIndex(_:_:_:_:)": {
+   "cnfClauses": 5311,
+   "cnfVariables": 1619,
+   "solverConflicts": 851,
+   "status": "contractHolds"
+  },
+  "clamp(_:_:_:)": {
+   "cnfClauses": 809,
+   "cnfVariables": 269,
+   "solverConflicts": 389,
+   "status": "contractHolds"
+  },
+  "discount(_:_:)": {
+   "cnfClauses": 4307,
+   "cnfVariables": 1337,
+   "solverConflicts": 1822,
+   "status": "contractHolds"
+  },
+  "mulCommutes32(_:_:)": {
+   "cnfClauses": 70566,
+   "cnfVariables": 20930,
+   "solverConflicts": 20001,
+   "status": "undecided"
+  },
+  "popcount8(_:)": {
+   "cnfClauses": 143,
+   "cnfVariables": 50,
+   "solverConflicts": 13,
+   "status": "contractHolds"
+  }
+ },
+ "source": "Examples/Metrics/Kernels.swift"
+}

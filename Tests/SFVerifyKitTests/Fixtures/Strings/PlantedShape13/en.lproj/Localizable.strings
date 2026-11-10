@@ -1,0 +1,5 @@
+/* Planted-bug suite, shape 13: the catalogue of PlantedBugs/LocalizedText.swift. */
+"tee.back" = "Back tee";
+"tee.middle" = "Middle tee";
+"tee.forward" = "Forward tee";
+"holes.played" = "%1$d of %2$d";

@@ -1,0 +1,106 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public func cellIndex(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Int8
+
+public func cellIndex_requires(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Bool
+
+public func cellIndex_ensures(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8, _ r: Int8) -> Bool
+
+public func percent(_ part: UInt16, _ whole: UInt16) -> UInt16
+
+sil @$s7Kernels9cellIndexys4Int8VAD_A3DtF : $@convention(thin) (Int8, Int8, Int8, Int8) -> Int8 {
+bb0(%0 : $Int8, %1 : $Int8, %2 : $Int8, %3 : $Int8):
+  debug_value %0, let, name "x", argno 1          // id: %4
+  debug_value %1, let, name "y", argno 2          // id: %5
+  debug_value %2, let, name "width", argno 3      // id: %6
+  debug_value %3, let, name "height", argno 4     // id: %7
+  %8 = integer_literal $Builtin.Int8, 0           // user: %10
+  %9 = struct_extract %0, #Int8._value            // user: %10
+  %10 = builtin "cmp_slt_Int8"(%9, %8) : $Builtin.Int1 // user: %11
+  cond_br %10, bb1, bb2                           // id: %11
+
+bb1:                                              // Preds: bb0
+  %12 = integer_literal $Builtin.Int8, 0          // user: %13
+  %13 = struct $Int8 (%12)                        // user: %14
+  br bb6(%13)                                     // id: %14
+
+bb2:                                              // Preds: bb0
+  %15 = struct_extract %0, #Int8._value           // user: %17
+  %16 = struct_extract %2, #Int8._value           // user: %17
+  %17 = builtin "cmp_sge_Int8"(%15, %16) : $Builtin.Int1 // user: %18
+  cond_br %17, bb3, bb4                           // id: %18
+
+bb3:                                              // Preds: bb2
+  %19 = integer_literal $Builtin.Int8, 1          // user: %22
+  %20 = struct_extract %2, #Int8._value           // user: %22
+  %21 = integer_literal $Builtin.Int1, -1         // user: %22
+  %22 = builtin "ssub_with_overflow_Int8"(%20, %19, %21) : $(Builtin.Int8, Builtin.Int1) // users: %24, %23
+  %23 = tuple_extract %22, 0                      // user: %26
+  %24 = tuple_extract %22, 1                      // user: %25
+  cond_fail %24, "arithmetic overflow"            // id: %25
+  %26 = struct $Int8 (%23)                        // user: %27
+  br bb5(%26)                                     // id: %27
+
+bb4:                                              // Preds: bb2
+  br bb5(%0)                                      // id: %28
+
+bb5(%29 : $Int8):                                 // Preds: bb4 bb3
+  br bb6(%29)                                     // id: %30
+
+bb6(%31 : $Int8):                                 // Preds: bb5 bb1
+  debug_value %31, let, name "cx"                 // id: %32
+  %33 = integer_literal $Builtin.Int8, 0          // user: %35
+  %34 = struct_extract %1, #Int8._value           // user: %35
+  %35 = builtin "cmp_slt_Int8"(%34, %33) : $Builtin.Int1 // user: %36
+  cond_br %35, bb7, bb8                           // id: %36
+
+bb7:                                              // Preds: bb6
+  %37 = integer_literal $Builtin.Int8, 0          // user: %38
+  %38 = struct $Int8 (%37)                        // user: %39
+  br bb12(%38)                                    // id: %39
+
+bb8:                                              // Preds: bb6
+  %40 = struct_extract %1, #Int8._value           // user: %42
+  %41 = struct_extract %3, #Int8._value           // user: %42
+  %42 = builtin "cmp_sge_Int8"(%40, %41) : $Builtin.Int1 // user: %43
+  cond_br %42, bb9, bb10                          // id: %43
+
+bb9:                                              // Preds: bb8
+  %44 = integer_literal $Builtin.Int8, 1          // user: %47
+  %45 = struct_extract %3, #Int8._value           // user: %47
+  %46 = integer_literal $Builtin.Int1, -1         // user: %47
+  %47 = builtin "ssub_with_overflow_Int8"(%45, %44, %46) : $(Builtin.Int8, Builtin.Int1) // users: %49, %48
+  %48 = tuple_extract %47, 0                      // user: %51
+  %49 = tuple_extract %47, 1                      // user: %50
+  cond_fail %49, "arithmetic overflow"            // id: %50
+  %51 = struct $Int8 (%48)                        // user: %52
+  br bb11(%51)                                    // id: %52
+
+bb10:                                             // Preds: bb8
+  br bb11(%1)                                     // id: %53
+
+bb11(%54 : $Int8):                                // Preds: bb10 bb9
+  br bb12(%54)                                    // id: %55
+
+bb12(%56 : $Int8):                                // Preds: bb11 bb7
+  debug_value %56, let, name "cy"                 // id: %57
+  %58 = struct_extract %56, #Int8._value          // user: %61
+  %59 = struct_extract %2, #Int8._value           // user: %61
+  %60 = integer_literal $Builtin.Int1, -1         // user: %61
+  %61 = builtin "smul_with_overflow_Int8"(%58, %59, %60) : $(Builtin.Int8, Builtin.Int1) // users: %63, %62
+  %62 = tuple_extract %61, 0                      // user: %67
+  %63 = tuple_extract %61, 1                      // user: %64
+  cond_fail %63, "arithmetic overflow"            // id: %64
+  %65 = struct_extract %31, #Int8._value          // user: %67
+  %66 = integer_literal $Builtin.Int1, -1         // user: %67
+  %67 = builtin "sadd_with_overflow_Int8"(%62, %65, %66) : $(Builtin.Int8, Builtin.Int1) // users: %69, %68
+  %68 = tuple_extract %67, 0                      // user: %71
+  %69 = tuple_extract %67, 1                      // user: %70
+  cond_fail %69, "arithmetic overflow"            // id: %70
+  %71 = struct $Int8 (%68)                        // user: %72
+  return %71                                      // id: %72
+}

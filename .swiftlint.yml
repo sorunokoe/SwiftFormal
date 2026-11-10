@@ -1,0 +1,73 @@
+# SwiftLint owns meaning, never layout. `swift format` (see .swift-format) owns whitespace; the two must not fight (decision D7).
+# Old findings are accepted through Scripts/baseline/swiftlint-baseline.json; only new findings fail (PC-5).
+#   lint:      swiftlint lint --baseline Scripts/baseline/swiftlint-baseline.json --strict
+#   re-baseline (only after FIXING findings, never to hide new ones):
+#              swiftlint lint --write-baseline Scripts/baseline/swiftlint-baseline.json   (then update Scripts/baseline/quality.json)
+# SwiftLint is not a package dependency: it runs from CI and the optional pre-commit hook (Scripts/install-hooks.sh).
+included:
+  - Sources
+  - Tests
+excluded:
+  - archive
+  - .build
+  - Examples/*/.build
+
+disabled_rules:
+  # Layout: owned by swift-format.
+  - line_length
+  - trailing_whitespace
+  - vertical_whitespace
+  - opening_brace
+  - trailing_comma
+  - sorted_imports
+  - indentation_width
+  - statement_position
+  - comma
+  - colon
+  - operator_usage_whitespace
+  # Not a quality signal here. TODO counts are ratcheted in Scripts/baseline/quality.json instead.
+  - todo
+  # The engine uses short mathematical names (lit, cref, lbd, ws); API naming is reviewed against the Swift API Design Guidelines instead.
+  - identifier_name
+  # Builder APIs take a closure argument and a trailing builder, like SwiftUI's `Button(action:) { label }`:
+  # `Prove(it: { rule($0) }, over: .allCases) { Table(...) }` is the intended shape.
+  - multiple_closures_with_trailing_closure
+
+opt_in_rules:
+  - force_unwrapping
+  - force_cast
+  - force_try
+  - implicitly_unwrapped_optional
+  - missing_docs
+  - redundant_nil_coalescing
+  - empty_count
+  - first_where
+  - contains_over_first_not_nil
+  - discouraged_optional_boolean
+  - fatal_error_message
+  - overridden_super_call
+  - override_in_extension
+  - private_over_fileprivate
+  - sorted_first_last
+  - reduce_into
+
+# Analyzer rules need a compiler log, so `swiftlint lint` skips them. Run on demand:
+#   swift build -v > .build/build.log && swiftlint analyze --compiler-log-path .build/build.log
+analyzer_rules:
+  - unused_import
+  - unused_declaration
+
+missing_docs:
+  warning: [open, public, package]
+
+custom_rules:
+  no_print_in_library:
+    regex: '\bprint\('
+    included: 'Sources/(SwiftFormal|SFBV|SFCNF|SFSAT|SFCheck|SFProve)/'
+    message: "Library code must not print. Return data; let the CLI print."
+    severity: error
+  no_unsafe_without_comment:
+    regex: '\b(unsafeBitCast|withUnsafe\w+|Unsafe(Mutable)?(Raw)?(Buffer)?Pointer)\b'
+    included: 'Sources/'
+    message: "Unsafe API: add a one-line `// SAFETY:` comment and keep the count in Scripts/baseline/quality.json (ratchet)."
+    severity: warning

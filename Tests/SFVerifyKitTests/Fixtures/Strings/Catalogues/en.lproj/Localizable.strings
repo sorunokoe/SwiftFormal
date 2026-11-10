@@ -1,0 +1,5 @@
+/* A small table written for StringsLintTests. */
+"club.driver" = "Driver";
+"club.iron" = "Iron";
+"score.format" = "%d of %@";
+"greeting" = "Hello";

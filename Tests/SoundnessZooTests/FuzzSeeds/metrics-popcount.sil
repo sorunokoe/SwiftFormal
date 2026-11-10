@@ -1,0 +1,93 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public func adder(_ a: UInt8, _ b: UInt8) -> UInt8
+
+public func adder_ensures(_ a: UInt8, _ b: UInt8, _ r: UInt8) -> Bool
+
+public func clamp(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Int8
+
+public func clamp_requires(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Bool
+
+public func clamp_ensures(_ x: Int8, _ lo: Int8, _ hi: Int8, _ r: Int8) -> Bool
+
+public func discount(_ price: UInt8, _ percent: UInt8) -> UInt8
+
+public func discount_ensures(_ price: UInt8, _ percent: UInt8, _ r: UInt8) -> Bool
+
+public func popcount8(_ x: UInt8) -> UInt8
+
+public func popcount8_ensures(_ x: UInt8, _ r: UInt8) -> Bool
+
+public func cellIndex(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Int8
+
+public func cellIndex_requires(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Bool
+
+public func cellIndex_ensures(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8, _ r: Int8) -> Bool
+
+public func mulCommutes32(_ a: Int32, _ b: Int32) -> Int32
+
+public func mulCommutes32_ensures(_ a: Int32, _ b: Int32, _ r: Int32) -> Bool
+
+sil @$s7Kernels9popcount8ys5UInt8VADF : $@convention(thin) (UInt8) -> UInt8 {
+bb0(%0 : $UInt8):
+  debug_value %0, let, name "x", argno 1          // id: %1
+  %2 = alloc_stack [var_decl] $UInt8, var, name "v", type $UInt8 // users: %3, %4, %9, %21, %24, %28, %39, %42, %46, %55
+  store %0 to %2                                  // id: %3
+  %4 = begin_access [read] [static] %2            // user: %5
+  end_access %4                                   // id: %5
+  %6 = integer_literal $Builtin.Int8, 85          // user: %8
+  %7 = struct_extract %0, #UInt8._value           // user: %8
+  %8 = builtin "and_Int8"(%7, %6) : $Builtin.Int8 // user: %18
+  %9 = begin_access [read] [static] %2            // user: %10
+  end_access %9                                   // id: %10
+  %11 = struct_extract %0, #UInt8._value          // user: %14
+  debug_step                                      // id: %12
+  %13 = integer_literal $Builtin.Int8, 1          // user: %14
+  %14 = builtin "lshr_Int8"(%11, %13) : $Builtin.Int8 // user: %16
+  %15 = integer_literal $Builtin.Int8, 85         // user: %16
+  %16 = builtin "and_Int8"(%14, %15) : $Builtin.Int8 // user: %18
+  %17 = integer_literal $Builtin.Int1, 0          // user: %18
+  %18 = builtin "uadd_with_overflow_Int8"(%8, %16, %17) : $(Builtin.Int8, Builtin.Int1) // user: %19
+  %19 = tuple_extract %18, 0                      // users: %27, %32, %20
+  %20 = struct $UInt8 (%19)                       // user: %22
+  %21 = begin_access [modify] [static] %2         // users: %22, %23
+  store %20 to %21                                // id: %22
+  end_access %21                                  // id: %23
+  %24 = begin_access [read] [static] %2           // user: %25
+  end_access %24                                  // id: %25
+  %26 = integer_literal $Builtin.Int8, 51         // user: %27
+  %27 = builtin "and_Int8"(%19, %26) : $Builtin.Int8 // user: %36
+  %28 = begin_access [read] [static] %2           // user: %29
+  end_access %28                                  // id: %29
+  debug_step                                      // id: %30
+  %31 = integer_literal $Builtin.Int8, 2          // user: %32
+  %32 = builtin "lshr_Int8"(%19, %31) : $Builtin.Int8 // user: %34
+  %33 = integer_literal $Builtin.Int8, 51         // user: %34
+  %34 = builtin "and_Int8"(%32, %33) : $Builtin.Int8 // user: %36
+  %35 = integer_literal $Builtin.Int1, 0          // user: %36
+  %36 = builtin "uadd_with_overflow_Int8"(%27, %34, %35) : $(Builtin.Int8, Builtin.Int1) // user: %37
+  %37 = tuple_extract %36, 0                      // users: %45, %50, %38
+  %38 = struct $UInt8 (%37)                       // user: %40
+  %39 = begin_access [modify] [static] %2         // users: %40, %41
+  store %38 to %39                                // id: %40
+  end_access %39                                  // id: %41
+  %42 = begin_access [read] [static] %2           // user: %43
+  end_access %42                                  // id: %43
+  %44 = integer_literal $Builtin.Int8, 15         // user: %45
+  %45 = builtin "and_Int8"(%37, %44) : $Builtin.Int8 // user: %52
+  %46 = begin_access [read] [static] %2           // user: %47
+  end_access %46                                  // id: %47
+  debug_step                                      // id: %48
+  %49 = integer_literal $Builtin.Int8, 4          // user: %50
+  %50 = builtin "lshr_Int8"(%37, %49) : $Builtin.Int8 // user: %52
+  %51 = integer_literal $Builtin.Int1, 0          // user: %52
+  %52 = builtin "uadd_with_overflow_Int8"(%45, %50, %51) : $(Builtin.Int8, Builtin.Int1) // user: %53
+  %53 = tuple_extract %52, 0                      // user: %54
+  %54 = struct $UInt8 (%53)                       // user: %56
+  dealloc_stack %2                                // id: %55
+  return %54                                      // id: %56
+}

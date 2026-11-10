@@ -1,0 +1,4 @@
+# Tests may force-unwrap and `try!`: a trap is a failed test, and the message names the line.
+disabled_rules:
+  - force_unwrapping
+  - force_try

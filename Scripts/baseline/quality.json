@@ -1,0 +1,58 @@
+{
+  "_note": "Ratchets (PC-5). Numbers may stay or improve. Update with `python3 Scripts/check-ratchet.py --update` in the same change that improves them.",
+  "lower_is_better": {
+    "swiftlint_baseline_findings": 309,
+    "try_bang_in_sources": 0,
+    "unsafe_mentions_in_sources": 0,
+    "todo_markers": 0
+  },
+  "swiftlint_baseline_by_rule": {
+    "cyclomatic_complexity": 37,
+    "discouraged_optional_boolean": 11,
+    "empty_count": 2,
+    "file_length": 14,
+    "for_where": 2,
+    "force_unwrapping": 33,
+    "function_body_length": 27,
+    "function_parameter_count": 6,
+    "implicit_optional_initialization": 2,
+    "large_tuple": 26,
+    "missing_docs": 114,
+    "nesting": 2,
+    "optional_data_string_conversion": 20,
+    "type_body_length": 11,
+    "type_name": 2
+  },
+  "trusted_growth_limit_percent": 10,
+  "trusted_lines": {
+    "SFCheck": 289,
+    "CompilerPin": 45,
+    "SILSemanticModel": 548
+  },
+  "coverage_percent_floor": {
+    "SFBV": 91.0,
+    "SFCNF": 99.0,
+    "SFCheck": 94.5,
+    "SFGenKit": 65.7,
+    "SFLLVM": 65.0,
+    "SFProve": 35.9,
+    "SFSAT": 95.8,
+    "SFSIL": 32.6,
+    "SFSemantics": 96.8,
+    "SFVerifyKit": 69.5,
+    "SwiftFormal": 91.2,
+    "SwiftFormalMacros": 41.2,
+    "SwiftFormalTesting": 70.3
+  },
+  "strict_memory_safety_by_file": {
+    "Sources/SFGenKit/DomainBuilder.swift": 1,
+    "Sources/SFSIL/ScanToolImages.swift": 6,
+    "Sources/SFVerifyKit/Demangle.swift": 11,
+    "Sources/SFVerifyKit/TrustedFiles.swift": 5,
+    "Sources/SwiftFormal/Verify.swift": 6,
+    "Sources/SwiftFormalTesting/Prove.swift": 1,
+    "Sources/SwiftFormalTesting/TrapWalk.swift": 2,
+    "Sources/SwiftFormalTesting/TrapWalkProtocol.swift": 9,
+    "Sources/sfgen/main.swift": 3
+  }
+}

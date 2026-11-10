@@ -1,0 +1,62 @@
+sil_stage canonical
+
+import Builtin
+import Swift
+import SwiftShims
+
+public func adder(_ a: UInt8, _ b: UInt8) -> UInt8
+
+public func adder_ensures(_ a: UInt8, _ b: UInt8, _ r: UInt8) -> Bool
+
+public func clamp(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Int8
+
+public func clamp_requires(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Bool
+
+public func clamp_ensures(_ x: Int8, _ lo: Int8, _ hi: Int8, _ r: Int8) -> Bool
+
+public func discount(_ price: UInt8, _ percent: UInt8) -> UInt8
+
+public func discount_ensures(_ price: UInt8, _ percent: UInt8, _ r: UInt8) -> Bool
+
+public func popcount8(_ x: UInt8) -> UInt8
+
+public func popcount8_ensures(_ x: UInt8, _ r: UInt8) -> Bool
+
+public func cellIndex(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Int8
+
+public func cellIndex_requires(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8) -> Bool
+
+public func cellIndex_ensures(_ x: Int8, _ y: Int8, _ width: Int8, _ height: Int8, _ r: Int8) -> Bool
+
+public func mulCommutes32(_ a: Int32, _ b: Int32) -> Int32
+
+public func mulCommutes32_ensures(_ a: Int32, _ b: Int32, _ r: Int32) -> Bool
+
+sil @$s7Kernels13mulCommutes32ys5Int32VAD_ADtF : $@convention(thin) (Int32, Int32) -> Int32 {
+bb0(%0 : $Int32, %1 : $Int32):
+  debug_value %0, let, name "a", argno 1          // id: %2
+  debug_value %1, let, name "b", argno 2          // id: %3
+  %4 = struct_extract %0, #Int32._value           // user: %7
+  %5 = struct_extract %1, #Int32._value           // user: %7
+  %6 = integer_literal $Builtin.Int1, 0           // user: %7
+  %7 = builtin "smul_with_overflow_Int32"(%5, %4, %6) : $(Builtin.Int32, Builtin.Int1) // user: %8
+  %8 = tuple_extract %7, 0                        // user: %9
+  %9 = struct $Int32 (%8)                         // user: %10
+  return %9                                       // id: %10
+}
+
+sil @$s7Kernels21mulCommutes32_ensuresySbs5Int32V_A2DtF : $@convention(thin) (Int32, Int32, Int32) -> Bool {
+bb0(%0 : $Int32, %1 : $Int32, %2 : $Int32):
+  debug_value %0, let, name "a", argno 1          // id: %3
+  debug_value %1, let, name "b", argno 2          // id: %4
+  debug_value %2, let, name "r", argno 3          // id: %5
+  %6 = struct_extract %1, #Int32._value           // user: %9
+  %7 = struct_extract %0, #Int32._value           // user: %9
+  %8 = integer_literal $Builtin.Int1, 0           // user: %9
+  %9 = builtin "smul_with_overflow_Int32"(%7, %6, %8) : $(Builtin.Int32, Builtin.Int1) // user: %10
+  %10 = tuple_extract %9, 0                       // user: %12
+  %11 = struct_extract %2, #Int32._value          // user: %12
+  %12 = builtin "cmp_eq_Int32"(%11, %10) : $Builtin.Int1 // user: %13
+  %13 = struct $Bool (%12)                        // user: %14
+  return %13                                      // id: %14
+}
