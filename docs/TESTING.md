@@ -117,8 +117,8 @@ tests that should kill it, fastest first. The lane applies each one, builds, and
 
 ## Adding a soundness-zoo case
 
-1. Pick the file. Walk, `prove`, `proveSigned`: `Tests/SoundnessZooTests/ZooTests.swift`. Scan (`sfverify`):
-   `Tests/SFOracleTests/ScanZooTests.swift`.
+1. Pick the file. Scan (through `sfverify`, the internal engine command): `Tests/SFOracleTests/ScanZooTests.swift`.
+   Walk and symbolic proofs (`SFProve`'s `prove`, `proveSigned`): `Tests/SoundnessZooTests/ZooTests.swift`.
 2. Add one entry to `Zoo` (`walk(...)`, `signed(...)` or `bits(...)`) with its truth:
    - `.falseClaim`: the tool must refute it with an input that replays.
    - `.trueClaim`: the tool must prove it.
@@ -218,7 +218,7 @@ Neither is a package dependency; CI is the authority. Commands: [CONTRIBUTING](.
 ### Coverage (line coverage, fast lane)
 
 `python3 Scripts/measure-coverage.py`. Only files in `Sources/<Module>` count. Executable targets (`sfgen`,
-`sfverify`) and the plugins are not measured (no test binary links them); their libraries `SFGenKit` and `SFVerifyKit`
+`sfverify`) are not measured (no test binary links them); their libraries `SFGenKit` and `SFVerifyKit`
 are.
 
 | Module | Lines | Covered | Percent | Floor in `quality.json` |

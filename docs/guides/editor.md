@@ -1,8 +1,8 @@
 # Editor guide: verdicts in your editor
 
-`swiftformal lsp` is a small language server. On each save it checks the code and shows each function's verdict above
-it. It runs beside sourcekit-lsp (completion, navigation, compiler errors) and never replaces it. macOS only:
-elsewhere `swiftformal` has no `lsp` command.
+`swiftformal lsp` is a small language server. On each save it runs `swiftformal check` (Scan, "the logic", and the
+walks you configure) and shows each function's answer above it. It runs beside sourcekit-lsp (completion,
+navigation, compiler errors) and never replaces it. macOS only: elsewhere `swiftformal` has no `lsp` command.
 
 ## VS Code
 
@@ -56,11 +56,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 | Lens | Meaning |
 |---|---|
-| `✓ proved (debug, release asserts)` | Logic proved the function's contract (`@Verify` with `#requires`/`#ensures`) for every input, in the configurations named. |
-| `✓ cannot crash (debug, release asserts)` | Logic proved the function cannot trap, for every input. No contract was checked. |
-| `✓ walked 12/12 (complete domain)` | A walk (`Prove(it:over:)`) ran every input of a complete domain. With `✓ cannot crash ·` in front, logic also proved it cannot trap. |
+| `✓ proved (debug, release asserts)` | Scan proved the function's promise (`@Verify` with `#requires`/`#ensures`) for every input, in the configurations named. |
+| `✓ cannot crash (debug, release asserts)` | Scan proved the function cannot trap, for every input. No promise was checked. |
+| `✓ walked 12/12 (complete domain)` | A walk (`Prove(it:over:)`) ran every input of a complete domain. With `✓ cannot crash ·` in front, Scan also proved it cannot trap. |
 | `~ walked 40/2^63+ (sample), not a proof` | A walk ran the inputs it lists, a sample of the domain. Evidence, not a proof. |
-| `✗ counterexample: …` | An input that breaks the contract or traps. Hover for the input and the replay call; a code action writes the replay as a test. |
+| `✗ counterexample: …` | An input that breaks the promise or traps. Hover for the input and the replay call; a code action writes the replay as a test. |
 | `? unchecked: <reason>` | Nothing was proved, for the reason given (unsupported code, budget, a linked walk that did not report). Never a proof. |
 | `! known issue: a walk fails` | A walk marked as a known issue fails. |
 | `⚠ stale: changed since the last check` | The code this verdict was about changed. It is not shown as proved again until a check of the new code proves it. |
@@ -112,8 +112,8 @@ An invalid configuration is reported once. Nothing is checked until it is fixed.
   change since the check started may have reached it. A check that raced an edit publishes its verdicts as stale.
 - **Diagnostics** (with the document version) for counterexamples and walk failures, and a warning at a hand-written
   `f_requires` / `f_ensures` or `// sf:verify` comment (neither is read).
-- **Hover:** the counterexample, the contract, the reason a function is unchecked.
-- **Code actions:** replay a counterexample as a Swift Testing test; add a contract (`@Verify` with
+- **Hover:** the counterexample, the promise, the reason a function is unchecked.
+- **Code actions:** replay a counterexample as a Swift Testing test; add a promise (`@Verify` with
   `#requires`/`#ensures`); a `Prove(it:over:)` skeleton.
 - **Progress** (`$/progress`) while a check runs.
 - **Test Explorer.** A `swiftformal/results` notification carries every verdict (`id` unique across packages,

@@ -7,51 +7,10 @@ with [MENTAL-MODEL.md](MENTAL-MODEL.md). If this page and the code disagree, the
 
 | Tool | Trusted | Checked independently | Tested, not proved |
 |---|---|---|---|
+| Scan and the gate | Compiler pin, build arguments, SIL reader and semantics, contract pairing, proof cache and stamps, library summaries and models | Every `safe`/`contractHolds`, by `SFCheck`; counterexamples replay | Reader and encoder against the compiler and native runs; LLVM cross-check |
 | Walk (`Prove`) | Compiler, your `Domain`, the enumerator | Counterexamples replay on the real function | Domain builders |
-| Prove (`SFProve`) | Compiler, bit-blaster, your `SymbolicInt` copy, multiplication lemmas | Every `proved`, by `SFCheck` | Encoding and lemmas against real execution |
-| Scan and the Gate | Compiler pin, build arguments, SIL reader and semantics, contract pairing, proof cache and stamps, library summaries and models | Every `safe`/`contractHolds`, by `SFCheck`; counterexamples replay | Reader and encoder against the compiler and native runs; LLVM cross-check |
+| Symbolic proofs (`SFProve`) | Compiler, bit-blaster, your `SymbolicInt` copy, multiplication lemmas | Every `proved`, by `SFCheck` | Encoding and lemmas against real execution |
 | Editor (`swiftformal lsp`) | Edit and file events; staleness by package | Shows `swiftformal check` results only | — |
-
-## Walk (`Prove`)
-
-- **Trusted:** the compiler (the function that runs is the one it built); your `Domain` (`proved` means "every input
-  in that domain", nothing more); the enumerator (it reports the domain size, so you can compare it with what you
-  expected).
-- **Trusted in `swiftformal check`:** which function a walk counts for is read from the text of its subject. A walk
-  counts only for the function its subject names (`"Type.member"`, or an operator, `"Type.=="`). A subject that names
-  only a type proves none of its members; its failure is still reported.
-- **Checked:** a `counterexample` is a real input to the real function. You can replay it.
-- **Tested, not proved:** domain builders (`@Finite`, `.allCases`, products), by unit tests. Without `over:`,
-  `@Verify` walks `Domain.ofParameterType`: the type's `Finite` domain, chosen by overload resolution, or an empty
-  sample for a type that is not `Finite` (then `bounded`, never `proved`; `InPlaceVerifyTests`).
-- **Limits:**
-  - A trap (overflow, force unwrap) cannot be caught in-process: it stops the whole run.
-  - On macOS and Linux with Swift 6.3 or newer, `Prove(neverTraps:)` runs the walk in a Swift Testing exit test. A
-    trap ends only the child process and fails the test with its input (confirmed by calling the function alone on
-    it). Such a walk is never `proved` or `bounded`. The child finds the walk by its mangled type name
-    (`_typeByName`, trusted to find the same type in the same binary). iOS has no exit tests.
-  - Strings are opaque: representative strings give `bounded`, not `proved`. So does a sampled or over-budget domain.
-
-Walk has no model of Swift between you and the answer: the function itself runs.
-
-## Prove (`SFProve`, preview)
-
-- **Trusted:**
-  - the compiler;
-  - the bit-blaster (Swift's integer rules as bit-vector formulas). The proof shows the formulas are unsatisfiable,
-    not that they mean what Swift means;
-  - your copy of the body, written with `SymbolicInt`. Your compiled function is not read;
-  - with `strategy: .refiningMultipliers`, the lemmas `Sources/SFProve/Refine.swift` adds (`addLemmas`,
-    `linkPrefixes`, `linkDistributivity`), each a fact about multiplication modulo 2^w. `SFCheck` takes them as part of
-    the formula, so a false lemma could make a false claim `proved`.
-- **Checked:** every `proved` needs `SFCheck` to accept the solver's proof. `SFCheck` does not import the solver or the
-  bit-blaster. In one process, a formula met again, equal clause for clause, reuses the accepted answer (only when it
-  took 2,000 conflicts or more).
-- **Tested, not proved:** operators against real Swift (exhaustive at 4 and 8 bits, sampled above); the lemmas against
-  the exact multiplier (`lemmasHoldForTheRealMultiplier`: every input at 1 to 3 bits, samples at 4 and 6 bits).
-- **Limits:** signed integers (8 to 64 bits) and `Bool` only. Multiplication and division are slow: the 16-bit
-  discount example takes about 40 s; at 32 bits it did not finish in minutes. A run that does not finish is `unknown`.
-  Not connected to `Prove`, `@Verify` or `Domain` yet.
 
 ## Scan (`swiftformal check`) and the Build Gate (`--gate`)
 
@@ -66,12 +25,12 @@ Scan models Swift and library code itself, so its list is the longest.
 ### Trusted: compiler and build
 
 - The compiler, and that it prints SIL the way the reader expects.
-- One pinned compiler (today `Apple Swift version 6.4`). Scan uses one compiler for everything (with `--build`, the
-  `swiftc` SwiftPM built with) and names it in its report.
-- Any other compiler: the gate fails closed. `swiftformal check` (and `sfverify`) warn and stamp the report
+- One pinned compiler (today `Apple Swift version 6.4`). Scan uses one compiler for everything (the `swiftc`
+  SwiftPM built with) and names it in its report.
+- Any other compiler: the gate fails closed. `swiftformal check` warns and stamps the report
   `"pinned": false`; this page does not cover those verdicts. A new compiler goes through the
   [pin upgrade](guides/pin-upgrade.md) before it is pinned.
-- With `--build` (and in `swiftformal check`, also with `--gate`) each module's arguments are SwiftPM's own: from the
+- In `swiftformal check` (also with `--gate`) each module's arguments are SwiftPM's own: from the
   build log, else the command saved for the same Swift Build build description, else Swift Build's plan of it
   (`task-store.msgpack`, an internal format). Trusted: the plan's command for a module is the one that build runs. A
   plan that does not read, or two commands for one module, gives none; the module is then built alone.
@@ -80,7 +39,7 @@ Scan models Swift and library code itself, so its list is the longest.
   the same `.build` writes a new description in between (it would first have to take SwiftPM's lock, and load and plan
   the package).
 - A linked module's command comes from the plan only when the plan holds it exactly as the run uses it.
-  `sfverify --build-log` never reads the plan: the log may come from another build than the folder's last.
+  `--build-log` never reads the plan: the log may come from another build than the folder's last.
 
 ### Trusted: SIL reader and contracts
 
@@ -98,7 +57,7 @@ Scan models Swift and library code itself, so its list is the longest.
 - A type name declared more than once in scope is refused: SIL does not say which one it means. The compiler is
   trusted to say whether an imported module declares a name.
 
-### Trusted: proof cache and verify stamps
+### Trusted: proof cache and gate stamps
 
 A `safe` or `contractHolds` from the proof cache is not checked again; `SFCheck` checked it when it was stored.
 Trusted:
@@ -333,9 +292,10 @@ framework; `SILBinaryTypes.swift`, `SILOpaqueCalls.swift`, `BinaryTypeCheck`).
   a read package type or an `inout` is refused. Localization is assumed deterministic: the same key, table, bundle and
   locale give the same text during one call ([KNOWN-ISSUES](KNOWN-ISSUES.md) 21).
 - **Listed:** each call is in the function's `assumptions` (JSON), an `assumes:` line (text) or a `note:` (gate), also
-  when a proof uses another function's (inlined, or its contract with `--modular`, also from the cache). So `safe`
-  and `contractHolds` mean: for every value these calls may return, provided they return. The summaries count such
-  proofs. `--no-opaque-calls` takes nothing on trust: every such call makes its function `unsupported`.
+  when a proof uses another function's (inlined, or its contract with the internal `sfverify --modular`, also from the
+  cache). So `safe` and `contractHolds` mean: for every value these calls may return, provided they return. The
+  summaries count such proofs. `--no-opaque-calls` takes nothing on trust: every such call makes its function
+  `unsupported`.
 - **Relational walk claims** (`Injective`, `RoundTrip`, `Agrees`, `Matches`) that `check` proves by self-composition
   are decided only after logic proves the rule returns normally, and list the assumptions of both queries
   ([KNOWN-ISSUES](KNOWN-ISSUES.md) 23).
@@ -363,7 +323,7 @@ generic types at their concrete types. Strings, collections, closures, TCA, exis
 Foundation values are read only in part: see [KNOWN-ISSUES](KNOWN-ISSUES.md) 6 to 24 and the
 [Scan guide](guides/scan.md). Hashers are followed; their contents are unknown.
 
-- **Modules:** other modules of your own packages are linked (`--build`, `check`). SDK modules and remote packages are
+- **Modules:** other modules of your own packages are linked. SDK modules and remote packages are
   not read.
 - **`unsupported`, with the reason:** other classes; a `~Copyable` type with a `deinit`, or a type containing one;
   calling a closure that is not a literal of the function; opening, casting or boxing an existential; `async`; `for-in`
@@ -381,7 +341,7 @@ Foundation values are read only in part: see [KNOWN-ISSUES](KNOWN-ISSUES.md) 6 t
     (`for i in a.indices { a[i] }`), is `undecided`.
   - If that fails, a function with one loop and no `ensures` is tried by 2-induction (`SILUnwind.swift`): two header
     visits unrolled without a trap, and a safe returning iteration implies a safe next one. Also partial correctness.
-  - Then loops are unrolled to find a trap (`--unwind`, 8 header visits by default). A trap found is a real run; none
+  - Then loops are unrolled to find a trap (8 header visits). A trap found is a real run; none
     found proves nothing and stays `undecided`.
 - **Throwing** (`throw`, `try`, `try?`, `do`/`catch` between your functions) is read. A throw is not a trap; the error
   is held but not read; `_ensures` holds on normal returns. Destroying an `any Error` box must run no code of yours.
@@ -390,11 +350,51 @@ Foundation values are read only in part: see [KNOWN-ISSUES](KNOWN-ISSUES.md) 6 t
   from integers and between widths. A NaN's sign and payload are unknown (quiet unless an operand is a signalling NaN,
   which LLVM may pass on), so a trap that depends on them is `undecided`. `squareRoot()`, `truncatingRemainder`, fused
   multiply-add and IEEE `minimum`/`maximum` give unknown results.
-- **Configurations:** by default a verdict holds in debug and release (`--config both`): a failed `assert` is a trap,
-  and so is a trap that appears once release removes an `assert` and its condition's side effects. `-Ounchecked` is
-  not covered.
+- **Configurations:** by default a verdict holds in debug and release: a failed `assert` is a trap, and so is a trap
+  that appears once release removes an `assert` and its condition's side effects. `-Ounchecked` is not covered.
 - **Fit:** bit, index and numeric kernels (about a quarter to a third of swift-collections' low-level targets), not
   app plumbing (0 to 2%).
+
+## Walk (`Prove`)
+
+- **Trusted:** the compiler (the function that runs is the one it built); your `Domain` (`proved` means "every input
+  in that domain", nothing more); the enumerator (it reports the domain size, so you can compare it with what you
+  expected).
+- **Trusted in `swiftformal check`:** which function a walk counts for is read from the text of its subject. A walk
+  counts only for the function its subject names (`"Type.member"`, or an operator, `"Type.=="`). A subject that names
+  only a type proves none of its members; its failure is still reported.
+- **Checked:** a `counterexample` is a real input to the real function. You can replay it.
+- **Tested, not proved:** domain builders (`@Finite`, `.allCases`, products), by unit tests. Without `over:`,
+  `@Verify` walks `Domain.ofParameterType`: the type's `Finite` domain, chosen by overload resolution, or an empty
+  sample for a type that is not `Finite` (then `bounded`, never `proved`; `InPlaceVerifyTests`).
+- **Limits:**
+  - A trap (overflow, force unwrap) cannot be caught in-process: it stops the whole run.
+  - On macOS and Linux with Swift 6.3 or newer, `Prove(neverTraps:)` runs the walk in a Swift Testing exit test. A
+    trap ends only the child process and fails the test with its input (confirmed by calling the function alone on
+    it). Such a walk is never `proved` or `bounded`. The child finds the walk by its mangled type name
+    (`_typeByName`, trusted to find the same type in the same binary). iOS has no exit tests.
+  - Strings are opaque: representative strings give `bounded`, not `proved`. So does a sampled or over-budget domain.
+
+Walk has no model of Swift between you and the answer: the function itself runs.
+
+## Symbolic proofs (`SFProve`, preview)
+
+- **Trusted:**
+  - the compiler;
+  - the bit-blaster (Swift's integer rules as bit-vector formulas). The proof shows the formulas are unsatisfiable,
+    not that they mean what Swift means;
+  - your copy of the body, written with `SymbolicInt`. Your compiled function is not read;
+  - with `strategy: .refiningMultipliers`, the lemmas `Sources/SFProve/Refine.swift` adds (`addLemmas`,
+    `linkPrefixes`, `linkDistributivity`), each a fact about multiplication modulo 2^w. `SFCheck` takes them as part of
+    the formula, so a false lemma could make a false claim `proved`.
+- **Checked:** every `proved` needs `SFCheck` to accept the solver's proof. `SFCheck` does not import the solver or the
+  bit-blaster. In one process, a formula met again, equal clause for clause, reuses the accepted answer (only when it
+  took 2,000 conflicts or more).
+- **Tested, not proved:** operators against real Swift (exhaustive at 4 and 8 bits, sampled above); the lemmas against
+  the exact multiplier (`lemmasHoldForTheRealMultiplier`: every input at 1 to 3 bits, samples at 4 and 6 bits).
+- **Limits:** signed integers (8 to 64 bits) and `Bool` only. Multiplication and division are slow: the 16-bit
+  discount example takes about 40 s; at 32 bits it did not finish in minutes. A run that does not finish is `unknown`.
+  Not connected to `Prove`, `@Verify` or `Domain` yet.
 
 ## The editor (`swiftformal lsp`)
 
@@ -450,23 +450,24 @@ native runs in `SILFloatSummaryTests` and the Scan zoo.
 
 - The compiler is correct.
 - Swift has a formal definition. It does not, so our encoding matches Swift by tests and review, not by proof.
-- With `--modular`, more than the engine's own soundness: a proof that lists `usesContracts` also rests on those
-  callees' proofs in the same run, and on the contract replacing the call (`SILEncoder.summarize`: the call traps
-  unless its arguments are valid and satisfy `requires`; only then is its result assumed to satisfy `ensures`).
-  Without `--modular` no verdict uses a contract in place of code.
+- With the maintainers' internal `sfverify --modular`, more than the engine's own soundness: a proof that lists
+  `usesContracts` also rests on those callees' proofs in the same run, and on the contract replacing the call
+  (`SILEncoder.summarize`: the call traps unless its arguments are valid and satisfy `requires`; only then is its result
+  assumed to satisfy `ensures`). `swiftformal check` never does this: no verdict uses a contract in place of code.
 - That a contract stands for every promise. A `contractHolds` proves `requires` ⇒ `ensures`, nothing a walk states
   besides (a table, injectivity): `swiftformal check` calls a function "proved by logic" only when every walk linked
   to it also proved its own promises. A `@Verify` contract logic cannot read, or that does not pair, is never dropped:
   the function is `unsupported` (`contract not read`), or `contractFails`, never `safe` or `contractHolds`.
 - Anything outside the domain, the contract, or the supported part of Swift.
-- Agreement with a second encoder, unless you ask for the LLVM cross-check.
+- Agreement with a second encoder: only the maintainers' LLVM cross-check checks it.
 
 ### The LLVM cross-check
 
-`sfverify --cross-check llvm` proves, for each `safe` or `contractHolds` function, that the LLVM IR encoding (`SFLLVM`)
-means the same (same traps, undefined behaviour and result), and reports `crossCheck`. `--cross-check llvm-strict`
-keeps only verdicts both agree on. The IR reader reads less of Swift, so many functions are `unread`, with the reason
-in `crossCheckReason` ([ADR 0008](decisions/0008-sfllvm-status.md)). An `agrees` also rests on:
+`sfverify --cross-check llvm` (an internal maintainer tool) proves, for each `safe` or `contractHolds` function, that
+the LLVM IR encoding (`SFLLVM`) means the same (same traps, undefined behaviour and result), and reports `crossCheck`.
+`--cross-check llvm-strict` keeps only verdicts both agree on. The IR reader reads less of Swift, so many functions are
+`unread`, with the reason in `crossCheckReason` ([ADR 0008](decisions/0008-sfllvm-status.md)). An `agrees` also rests
+on:
 
 1. **The bridge** (`Sources/SFLLVM/LLVMBridge.swift`), which predicts Swift's memory layout from the ABI. Each
    prediction must fit the IR header exactly (piece sizes, `dereferenceable(N)`, `sret`); a misfit is `unread`. Enums
@@ -490,4 +491,5 @@ Experiment logs and the design notes:
 [pure-Swift verifier design](../archive/design/specs/2026-11-05-pure-swift-verifier-design.md) and
 [product design](../archive/design/specs/2026-11-05-swiftformal-product-design.md). The coverage figure:
 [TRIZ and Swift semantics research note](../archive/research/2026-11-05-triz-and-swift-semantics.md). How-to pages with
-the same limits: [Walk](guides/walk.md), [Prove](guides/prove.md), [Scan](guides/scan.md), [Gate](guides/gate.md).
+the same limits: [Scan](guides/scan.md), [Walk](guides/walk.md), [symbolic proofs](guides/prove.md),
+[gate](guides/gate.md).

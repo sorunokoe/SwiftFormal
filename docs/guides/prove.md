@@ -1,13 +1,13 @@
-# Prove: whole integer ranges (`SFProve`, preview)
+# Symbolic proofs: whole integer ranges (`SFProve`, preview)
 
-`SFProve` proves claims over every value of 8 to 64-bit integers with a SAT solver. A "proved" is accepted only after
-an independent proof checker agrees. This is a preview.
+Symbolic proofs (`SFProve`) prove claims over every value of 8 to 64-bit integers with a SAT solver. A `proved` is
+accepted only after an independent proof checker agrees. This is a preview.
 
 ## How to use
 
-`SFProve` proves claims over every value of 8 to 64-bit integers with a SAT solver. `import SwiftFormalTesting`
-re-exports it (it is no product of its own). Write the body with `SymbolicInt` inside `proveSigned`. `SymbolicInt`
-uses Swift's own operators and records where real Swift would trap (overflow, divide by zero, `Int.min / -1`):
+`import SwiftFormalTesting` re-exports `SFProve` (it is no product of its own). Write the body with `SymbolicInt`
+inside `proveSigned`. `SymbolicInt` uses Swift's own operators and records where real Swift would trap (overflow,
+divide by zero, `Int.min / -1`):
 
 ```swift
 import SwiftFormalTesting
@@ -21,9 +21,8 @@ proveSigned(widths: [16, 16], requires: { $0[0] >= 0 && $0[0] <= 300 && $0[1] >=
 }                                                                              // .proved
 ```
 
-Verdicts: `.proved`, `.mayTrap(inputs)`, `.claimFails(inputs)`, `.unknown`. Limits: you write the body again with
-`SymbolicInt`; only signed integers and `Bool`; multiplication and division get slow quickly. Not connected to `Prove`
-or `@Verify` yet.
+Verdicts (`SymbolicVerdict`): `.proved`, `.mayTrap(inputs)`, `.claimFails(inputs)`, `.unknown`. Not connected to
+`Prove` or `@Verify` yet: you write the body again ([limits](#limits)).
 
 ## Writing the body: conversions, `min`/`max`, Boolean `==`
 
@@ -63,8 +62,8 @@ debug test build.
 
 ## Multiplication: `strategy: .refiningMultipliers`
 
-For the circuit-level `prove(inputWidths:claim:)`, `strategy: .refiningMultipliers` abstracts each multiplication and
-refines it only when the solver needs the exact product. Verdicts are the same as with the default `.exact`. Claims
+For the circuit-level `SFProve.prove(inputWidths:claim:)`, `strategy: .refiningMultipliers` abstracts each
+multiplication and refines it only when the solver needs the exact product. Verdicts are the same as with the default `.exact`. Claims
 that need only algebraic facts about products finish far faster.
 
 ## Limits
@@ -73,4 +72,4 @@ that need only algebraic facts about products finish far faster.
 - Only signed integers and `Bool`.
 - Adders, comparisons and branches are fast. Multiplication and division get slow quickly: a 16-bit discount takes
   about 40 s; the same at 32 bits did not finish in minutes.
-- Not connected to `verify`, `@Verify` or `Domain` yet.
+- Not connected to `Prove`, `@Verify` or `Domain` yet.

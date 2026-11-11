@@ -47,3 +47,11 @@ Things that were surprising, and the decision for each:
 - **`MulAbstraction` and the `proveRefining*` family are `package`.** `prove(...strategy:)` now exposes `.refiningMultipliers` (Phase 6, ADR 0005).
 - **`Scripts/check-api.sh` does not see `package` demotion.** The API digester counts `package` declarations as API, so narrowing an engine type does not show up as a break. The allowlist therefore holds only the Phase 4 renames and the four `@_spi` moves above; the public counts in this table are the record of what narrowed.
 - `SFVerifyKit` and `SFGenKit` keep their public API (Decision D1). Revisit after the first release.
+
+## Since 0.1.0
+
+The front doors are now the three products: `SwiftFormal` (with `@Verify`, `#requires` and `#ensures`, which took
+over `SwiftFormalContracts`), `SwiftFormalTesting` (which re-exports the `SFProve` facade), and the `swiftformal`
+command, whose flags, exit codes and `--json` output are its contract. `SFVerifyKit` and `SFGenKit` are no longer
+products, the `SwiftFormalGate` plugin is gone (`swiftformal check --gate` replaced it), and `sfverify` and `sfgen`
+are internal maintainer tools.

@@ -1,10 +1,12 @@
 # Generate: a check for every Rule, with no hand-written test
 
-`sfgen` writes a Walk check for every `Rule` (the mapper protocol of the app it was built for). It reads the symbol
+**Maintainer-only.** `sfgen` is an internal tool, not a product: `swiftformal` has no command for it. It is built
+from a checkout with `swift build --product sfgen`. In your own tests, write `Prove(it:over:)` walks instead
+([Walk guide](walk.md)).
+
+`sfgen` writes a walk for every `Rule` (the mapper protocol of the app it was built for). It reads the symbol
 graph of the Kotlin framework and the app's Swift sources, so nobody lists inputs by hand. It is a build-time tool for
 macOS. It never runs your Rules; it writes a Swift Testing file that does.
-
-`sfgen` is a maintainers' tool: no product, built from a checkout with `swift build --product sfgen`.
 
 ## The three commands
 
@@ -35,8 +37,8 @@ It does not know the right answer. A complete domain gives `proved` (every input
 `bounded`: a sample, never a proof. The file uses only the public API, so it compiles in the app's test target
 (`GeneratedTestsSlowTests` builds one in a package that depends on SwiftFormal as an app does).
 
-Pre-release builds also wrote a behaviour lock (`__SFLocks__`). The lock left the public API, so `sfgen` no longer writes
-or reads one; delete old `__SFLocks__` folders. The measurements below were taken with the lock.
+Pre-release builds also wrote a behaviour lock (`__SFLocks__`); `sfgen` no longer writes or reads one, so delete old
+`__SFLocks__` folders. The measurements below were taken with the lock.
 
 ## Pitfalls
 
@@ -99,7 +101,7 @@ sfgen domains --symbols <dir>/sg --import <Module> --out Tests/AppTests/Generate
 - Types that need a hand-built value (generics, closures, tuples, dictionaries, private types) are skipped with a
   reason, not guessed.
 
-## Measured: a production iOS app (one app, one machine, debug build)
+## Measured: a real iOS app (one app, one machine, debug build)
 
 | Step | Result |
 |---|---|
@@ -108,7 +110,6 @@ sfgen domains --symbols <dir>/sg --import <Module> --out Tests/AppTests/Generate
 | Test build | 0 compile errors after pruning 5 Rules; first build 5 min 11 s, rebuild after a regeneration about 40 s |
 | Test run (iOS simulator, debug, 500 inputs at most per Rule) | 392 passed in 575 s |
 | Verdicts | 67 `proved` (complete domain), 325 `bounded`, 0 counterexamples |
-| Lock (no longer written) | 392 Rules recorded, 10 MB of lock files |
 
 Why the 74 were skipped (from the manifest, which names each reason):
 
@@ -124,15 +125,3 @@ Why the 74 were skipped (from the manifest, which names each reason):
 | generic input | 4 |
 | dictionary input | 2 |
 | internal type of another module | 2 |
-
-### Is the lock stable? Only partly confirmed
-
-A second full run was stopped at 284 of 392 Rules (measured).
-
-- 283 matched their lock.
-- `ProfileEditRule` reported `CHANGED` on unchanged code, so its output is not the same on every run. The lock prints
-  only a prefix of each output, so the differing field was not found. Treat that Rule as non-deterministic until
-  someone finds the field (a clock, a random value or a set order are the usual causes).
-- `PerformanceRule` had not finished after more than 30 s when the run was stopped.
-- Not measured: the last 108 Rules on a second pass, and why an earlier second-pass attempt lost the test host
-  silently in `BagDetailsRule` (that Rule alone passes in 9.3 s).

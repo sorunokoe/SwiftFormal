@@ -60,8 +60,8 @@ let usage = """
       --symbol <name>          Check only the function with this name as reports print it (`Score.clamp(_:)`), or with
                                this Type.member and argument labels; fails unless exactly one has it. Every target is
                                still built and read, so walks link as without it; only the others' proofs are skipped.
-      --mutate                 Check each contract that holds again on small edits of its function, and list it as
-                               weak when an edit that changes the result still satisfies it (as `sfverify --mutate`).
+      --mutate                 Check each promise that holds again on small edits of its function, and list it as
+                               weak when an edit that changes the result still satisfies it.
       --json                   Machine-readable report on stdout.
       --xcode                  Compiler-format lines (file:line:col: error|warning|note: [swiftformal] …) for Xcode,
                                VS Code's $swiftc matcher and CI logs. error = what fails the run (a broken promise,

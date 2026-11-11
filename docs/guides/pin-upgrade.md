@@ -98,7 +98,7 @@ The steps of [compilers](compilers.md#adding-a-compiler), with the candidate com
 1. Add the candidate's `xcrun swiftc --version` first line to `SILFrontendVersion.verifiedCompilers`. Local edit, do
    not commit yet.
 2. Run `Scripts/test-lane.sh oracle` and `Scripts/test-lane.sh slow`.
-3. Run `Scripts/check-golden.sh` (golden `sfverify` verdicts) and `python3 Scripts/metrics.py` (verdicts and solver
+3. Run `Scripts/check-golden.sh` (golden verdicts of the internal `sfverify`) and `python3 Scripts/metrics.py` (verdicts and solver
    cost on `Examples/Metrics`).
 4. Compare every verdict with the pinned compiler's run.
 5. Run `SF_FOLDER_ORACLE=full Scripts/test-lane.sh oracle` (constant-folder oracle for S0).

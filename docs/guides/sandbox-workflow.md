@@ -66,7 +66,8 @@ Tried once, for SFSAT only, on a throwaway copy. The redundancy check of clause 
 (an unsound change: the solver can accept a wrong answer).
 
 - `Scripts/check-golden.sh`: red.
-- `swift build --package-path Examples/GatedPackage`: the gate failed (`gate FAILED: 1 of 2 gated functions proved`).
+- The gate on `Examples/GatedPackage` (then a build plugin; today `swiftformal check --gate`): failed
+  (`gate FAILED: 1 of 2 gated functions proved`).
 - `SFSATTests`: **not run** (too slow). Unknown whether it alone catches this.
 
 That is why `Scripts/check-golden.sh` is a consumer of SFCNF, SFSAT, SFCheck and SFBV. Other sandboxes were not
@@ -74,17 +75,17 @@ tried.
 
 ## Known problems
 
-- **Golden check on the first run in a fresh checkout (fixed).** `sfverify --build` reads the `swift build -v` log.
-  The gate could print "sfverify: gate passed ..." into the middle of a compile command in that log (seen as
-  `-seriali` / `ze-diagnostics`). The broken command was cached and broke later runs. `SwiftPMBuild.compileCommand`
-  now removes gate messages first (test: `aGateLineInsertedInTheMiddleOfTheCompileCommandIsRemoved`). If you still see
+- **Golden check on the first run in a fresh checkout (fixed).** The internal `sfverify --build` reads the
+  `swift build -v` log. The gate (then a build plugin) could print "sfverify: gate passed ..." into the middle of a
+  compile command in that log (seen as `-seriali` / `ze-diagnostics`). The broken command was cached and broke later
+  runs. `SwiftPMBuild.compileCommand` now removes gate messages first (test: `aGateLineInsertedInTheMiddleOfTheCompileCommandIsRemoved`). If you still see
   `unknown argument` from the compiler, delete `.build/swiftformal/args/Kernels.args` in `Examples/GatedPackage` and
   run again.
 - **Checkout folder name (fixed).** It no longer has to be `SwiftFormal`: `Examples/GatedPackage` names the dependency
   (`.package(name: "SwiftFormal", path: "../..")`). Checked by running `Scripts/check-golden.sh` in a clone with
   another name.
-- **`sfgen --help` exits with status 2**, and so does `sfgen` with no arguments. So the sfgen consumer check is
-  `swift build --product sfgen`. It only proves the tool builds.
+- **`sfgen --help` (internal tool) exits with status 2**, and so does `sfgen` with no arguments. So the sfgen
+  consumer check is `swift build --product sfgen`. It only proves the tool builds.
 - **`SwiftFormalTesting` has no consumer command in the registry.** Its loop runs its own tests only. Its example
   (`Examples/Walk`) runs in CI through `Scripts/check-examples.sh`.
 - **`SFLLVM` has no production consumer**, only tests. See [ADR 0008](../decisions/0008-sfllvm-status.md).

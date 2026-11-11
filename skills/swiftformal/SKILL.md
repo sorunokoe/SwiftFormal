@@ -5,19 +5,18 @@ description: Use when writing or changing Swift functions in a project that uses
 
 # SwiftFormal: prove the Swift you write
 
-SwiftFormal reads what the Swift compiler made of a function and proves, for every input, that it cannot crash
-(trap) and that it keeps its contract. Where logic cannot decide, a walk (a test that runs the real function on every
-input of a domain) can prove it instead. Your job: after each change, check the function, read the verdict, and act
-on it. Every JSON field: [reference.md](reference.md).
+SwiftFormal's Scan reads what the Swift compiler made of a function and proves, for every input, that it cannot crash
+(trap) and that it keeps its promise (its contract). Where Scan cannot decide, a walk (a test that runs the real
+function on every input of a domain) can prove it instead. Your job: after each change, check the function, read the
+verdict, and act on it. Every JSON field: [reference.md](reference.md).
 
 ## Before you start
 
 1. Find the tool. Use `swiftformal` if it is on `PATH`; otherwise it is usually
    `<SwiftFormal checkout>/.build/release/swiftformal`. To build it, in the SwiftFormal checkout run
    `swift build -c release --product swiftformal`. It is the only command: SwiftFormal has three products,
-   `SwiftFormal` (app code), `SwiftFormalTesting` (tests) and `swiftformal`. `swiftformal verify`, `scan` and `gen`,
-   `sfverify`, `sfgen` and the `SwiftFormalGate` / `SwiftFormalScan` plugins were removed; `swiftformal doctor` names
-   any your package still uses and what replaces it.
+   `SwiftFormal` (app code), `SwiftFormalTesting` (tests) and `swiftformal`. Older names (`swiftformal verify`/`scan`/
+   `gen`, the `SwiftFormalGate`/`SwiftFormalScan` plugins) are gone; `swiftformal doctor` names any your package uses.
 2. Run `swiftformal doctor --package <package-dir>`. Exit 0 means the setup is fine. Otherwise do what each `fix:` line
    says. If the compiler is not the pinned one, the verdicts are not covered by SwiftFormal's trust notes: tell the
    user.
@@ -94,10 +93,11 @@ there and fail once it is fixed; delete them then.
   as `String.count` returns; add a walk. Other categories (`exclusivity`, `loops`, …): follow `hint`, or add a walk.
 - Do not twist clear code only to please Scan. A walk is a fine answer.
 
-## Add a contract
+## Add a promise
 
-Write it in place, with `@Verify`, `#requires` and `#ensures`, and `import SwiftFormal` (product `SwiftFormal`). This is the one form to write. `#requires` says which inputs callers may pass;
-`#ensures` what the result must satisfy (`$0` or `result in` is the result). Scan proves it for every input:
+Write it in place, with `@Verify`, `#requires` and `#ensures`, and `import SwiftFormal` (product `SwiftFormal`). This is
+the one form to write. `#requires` says which inputs callers may pass; `#ensures` what the result must satisfy (`$0` or
+`result in` is the result). Scan proves it for every input:
 
 ```swift
 @Verify(over: .product(.int(0...1_000), .int(-5...105)))
@@ -108,10 +108,11 @@ public func discounted(price: Int, percent: Int) -> Int {
 }
 ```
 
-`over:` also gives a walk, `verify_discounted()`, for a test. Leave `over:` out when the parameters are `String`, `Int`
-and the like: then there is no walk and Scan alone proves it. With only `#requires(percent >= 0 && percent <= 100)`,
-the walk passes, but `check` says `counterexample` with `price = -9223372036854775808`: logic checks every input, not
-only the walk's. A negative price is not a real price, so stating that rule in `#requires` is the honest fix here.
+`over:` is optional. It also gives a walk, `verify_discounted()`, for a test: `#expect(verify_discounted().isProved)`.
+Leave `over:` out when the parameters are `String`, `Int` and the like: then there is no walk and Scan alone proves it.
+With only `#requires(percent >= 0 && percent <= 100)`, the walk passes, but `check` says `counterexample` with
+`price = -9223372036854775808`: logic checks every input, not only the walk's. A negative price is not a real price,
+so stating that rule in `#requires` is the honest fix here.
 
 A computed property takes its contract in the getter, the same way (most app contracts are of this kind):
 
@@ -141,10 +142,10 @@ has (the walk property for a golden table is `Matches(table:)`).
 ## Add a walk
 
 In the test target (products `SwiftFormal` and `SwiftFormalTesting`), from SwiftFormal's `Examples/Walk`. `Prove` is
-the only way to walk: every form is `Prove(it: …, over: …) { properties }`. The older names (`expectProved`,
-`expectNoTrap`, `verify`, `verifyContracts`, `partition`, `lockBehavior`, `walkInExitTest`, `prove`, `Table`, `Image`)
-do not compile; never write them, and replace them where you find them (the compiler's error says with what). The walk
-covers the function its `it:` closure calls, here `label(for:)`:
+the only way to walk: every form is `Prove(it: …, over: …) { properties }`. Names from before 0.1.0 (`expectProved`,
+`expectNoTrap`, `verify(…)`, `verifyContracts`, `partition`, `lockBehavior`, `walkInExitTest`, `prove(…)`, `Table`,
+`Image`) do not compile; replace them where you find them (the compiler's error says with what). The walk covers the
+function its `it:` closure calls, here `label(for:)`:
 
 ```swift
 @Test func everySpeedHasItsLabel() {

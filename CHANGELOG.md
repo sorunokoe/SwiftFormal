@@ -4,7 +4,16 @@ All notable changes, in the [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- Docs use one set of words everywhere ([glossary](docs/GLOSSARY.md)): Scan ("the logic") first, then Walk. The
+  `SFProve` engine is now called **symbolic proofs**, so `Prove` means only the test API.
+- `swiftformal check --help`: `--mutate` no longer points to an internal tool.
+
+### Fixed
+
+- `Scripts/check-api.sh` works against the `0.1.0` tag. It compares `SwiftFormal` and `SwiftFormalTesting` only;
+  `SFProve` (a preview) is not compared.
 
 ## [0.1.0] - 2026-11-10
 

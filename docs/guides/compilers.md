@@ -16,14 +16,13 @@ say the same.
 
 ## Which compiler Scan runs
 
-`swiftformal check`, its gate and the maintainers' `sfverify` pick one compiler per run and use it for every `swiftc`
-they start:
+`swiftformal check`, its gate and the internal maintainer tool `sfverify` pick one compiler per run and use it for
+every `swiftc` they start:
 
-1. With `--build`: the `swiftc` that SwiftPM ran (from its build log).
+1. When SwiftPM built the target (`--scan`, the gate) or with `--build-log`: the `swiftc` that build ran (from its log).
 2. Else `SWIFT_EXEC`, when it names an executable.
 3. Else `xcrun --find swiftc`, which honours `DEVELOPER_DIR` and `TOOLCHAINS`. If `TOOLCHAINS` names no installed
-   toolchain, `xcrun` silently uses the default one; Scan warns (`sfverify: note: TOOLCHAINS=… names no installed
-   toolchain`).
+   toolchain, `xcrun` silently uses the default one; Scan warns (`note: TOOLCHAINS=… names no installed toolchain`).
 4. Without `xcrun` (Linux): the first `swiftc` on `PATH`, with no `-sdk`.
 
 Then one `swiftc -print-target-info` (0.1 s) gives the version line for the pin, the target triple and the resource
@@ -33,9 +32,9 @@ directory (where the macro plugins are).
   prints a `note:` line with its path.
 - `swiftformal doctor` always shows the path and how it was found.
 - `sfverify --package <dir>` without `--build` compiles for the package's macOS deployment target
-  (`platforms: [.macOS(.v13)]`, read with `swift package dump-package`), as SwiftPM does.
-- Plain files and the gate have no manifest, so they compile for the compiler's default target (the host). Change it
-  with `--swiftc-arg -target --swiftc-arg <triple>`.
+  (`platforms: [.macOS(.v13)]`, read with `swift package dump-package`), as SwiftPM does. Plain files have no
+  manifest, so `sfverify` compiles them for the compiler's default target (the host); `--swiftc-arg -target
+  --swiftc-arg <triple>` changes it.
 - Linux is located but not validated. Scan stays macOS-only ([platforms](platforms.md)).
 
 ## What happens on a compiler that is not pinned
@@ -68,7 +67,7 @@ reader and prints these steps for the candidate.
 | slow | yes | no: run by hand before a release |
 | oracle | yes | no: run by hand before a release, on the pinned compiler |
 
-CI runs only on pull requests to `main`. There is no nightly workflow.
+CI runs only on pull requests to `main`.
 
 The pin names an Apple Swift 6.4 toolchain: Xcode 27.0 (27A266a). The workflows run on GitHub's `xcode-27` runner
 image (a preview image when this was written) and select that Xcode by path with `DEVELOPER_DIR`, because the image's

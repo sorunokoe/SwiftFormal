@@ -215,7 +215,8 @@ says `unchecked`, and a test covers it. See [known issues](docs/KNOWN-ISSUES.md)
 
 Needs Swift 6.1 or newer. The library runs on macOS 13 and iOS 16. The checks run on a Mac ([platforms](docs/guides/platforms.md)).
 
-Also included in `SwiftFormalTesting`: [Prove](docs/guides/prove.md), symbolic proofs over whole integer ranges.
+Also included in `SwiftFormalTesting`, as a preview: [symbolic proofs](docs/guides/prove.md) (`proveSigned`) over
+whole integer ranges.
 
 ## How much to trust it
 

@@ -1,7 +1,6 @@
 # Known issues
 
-Problems found while testing that are **not fixed**, with the reason. None changes a verdict; each waits for an owner
-decision.
+Problems found while testing, with the reason and the status today. None changes a verdict.
 
 **Ordering rule:** a real soundness bug (a wrong `proved`) is listed first, and its test is marked `withKnownIssue`.
 Today there is none: the soundness zoo, the differential and metamorphic SAT tests and the fuzzing found no wrong
@@ -11,7 +10,7 @@ verdict. Numbers never change, so older references stay valid.
 
 - **Symptom:** in `Sources/SFSAT/Solver.swift`, `static func internalLit(_ lit: Int32) -> Int` traps for
   `lit = Int32.min` (negation), and for literals above about 2³⁰ (`2 * (lit - 1)` in 32-bit arithmetic). Found by
-  `sfverify` on the `SFSAT` target ([dogfooding](guides/dogfooding.md)).
+  Scan (`sfverify`, the internal engine command) on the `SFSAT` target ([dogfooding](guides/dogfooding.md)).
 - **Workaround:** none needed. DIMACS variable numbers are bounded by the formula and `CNFBuilder` allocates from 1, so
   no package path reaches this range. A trap is a crash, never a wrong answer.
 - **Status:** open. Options: `precondition(lit != 0)` with a clear message, or widen the arithmetic to `Int`.
@@ -25,8 +24,8 @@ verdict. Numbers never change, so older references stay valid.
   SwiftPM's exact flags (measured on tests using `@Verify` and `@Test`, 158 functions).
 - **Workaround:** `swiftformal check --scan <dir>:<target>`, `--build-log` or `--gate`. They build with SwiftPM or read
   the build's log, so the macro is loaded ([Gate guide](guides/gate.md)).
-- **Status:** mostly fixed. The `SwiftFormalGate` build plugin had the same limit (PackagePlugin gives a build-tool
-  plugin no way to find a built macro), which is why it was removed.
+- **Status:** mostly fixed. The build plugin that came before `swiftformal check --gate` had the same limit
+  (PackagePlugin gives a build-tool plugin no way to find a built macro), which is why it was removed.
 
 ## 3. Fixed: the SIL and LLVM readers trapped on a repeated basic-block label
 
@@ -58,11 +57,11 @@ verdict. Numbers never change, so older references stay valid.
 ## 6. Scan reads other modules only from your own packages (partly fixed, Scan limitation)
 
 - **Symptom:** SDK modules (Foundation, SwiftUI) and remote packages (checked out under `.build`) are not read, so
-  their types, conformances and functions are `unsupported`. `sfverify` on loose files and the Build Gate link nothing.
+  their types, conformances and functions are `unsupported`. `sfverify` on loose files links nothing.
   A type name declared twice (in two files, two linked modules, or also by an imported module or the standard library)
   is refused as `ambiguous type`: SIL prints a type without its module, and Scan never guesses.
-- **Workaround:** use `sfverify --build` or `swiftformal check`: they link the SIL of your package's imported targets
-  and of local path dependencies. Rename one of two same-named types.
+- **Workaround:** use `swiftformal check` or `check --gate` (maintainers: `sfverify --build`): they link the SIL of
+  your package's imported targets and of local path dependencies. Rename one of two same-named types.
 - **Status:** partly fixed. Not a verdict bug: Scan says `unsupported` with the reason.
 
 ## 7. Scan knows string identities and literal texts, not the contents of other strings (by design, for now)
@@ -161,7 +160,7 @@ verdict. Numbers never change, so older references stay valid.
 ## 13. Objective-C objects: every call returns its own value (by design, for now)
 
 - **Symptom:** an Objective-C or Kotlin object is a reference whose getters return any value of their type, a fresh
-  one at each call. So `x.index >= 0 && x.index < 3 ? a[Int(x.index)] : 0` is `may trap` with three different values
+  one at each call. So `x.index >= 0 && x.index < 3 ? a[Int(x.index)] : 0` is `mayTrap` with three different values
   of `x.index`, though a Kotlin `val` returns the same value every time.
 - **Workaround:** none needed for soundness: a fresh value per call covers every value the real object can return, so
   `safe` stays sound. The report lists what each call returned (`foreignResults`) and says the values come from
@@ -211,7 +210,7 @@ verdict. Numbers never change, so older references stay valid.
     `String.split` and `Character(_:)` are `unsupported` (issue 7).
   - Shape 5, "-0" from `String(format: "%.0f", x)`: `undecided`, since what `%f` prints is not modelled (issue 21);
     the fixed one is `unsupported` (`Double.rounded()`). Shape 5's `"-\(n)"` is caught.
-  - Shape 13, two tees with different keys: `undecided`, never proved, since different keys may have the same text
+  - Shape 13, two cases with different keys: `undecided`, never proved, since different keys may have the same text
     (issue 21). A walk over the real catalogue checks it.
   - Shape 10, a forgotten subclass of a sealed hierarchy: a class instance is `unsupported`, so `as?` casts and
     `onEnum(of:)` are not read.
@@ -300,8 +299,8 @@ verdict. Numbers never change, so older references stay valid.
   counterexample there is real. Outside a scan (`SILVerifier` alone) such a call is `unsupported` ("an array of
   unknown length").
 - **Still unknown:** the elements of an array that is not a literal, and of the results of `filter` and `compactMap`
-  (their count is exact), so a claim that needs them is `undecided`. `--modular` does not prove a `bounded` function
-  again.
+  (their count is exact), so a claim that needs them is `undecided`. `sfverify --modular` does not prove a `bounded`
+  function again.
 - **Not read:** `reduce`, `forEach`, `sorted(by:)`, `firstIndex(where:)` and other closure-taking calls; key-path
   closures (`map(\.value)`); a closure that can throw, captures a `var`, or is generic (a closure passed on to a
   generic helper). An array whose elements may hold a closure, an existential or an object is read as issue 9 says:

@@ -152,7 +152,7 @@ sfverify --gate --proof-cache=out Examples/does-not-exist.swift
   stderr 'sfverify: warning: --proof-cache is ignored with --gate' sha=c9c51ed1b399
 swiftformal --help
   exit 0
-  stdout 'swiftformal — prove with logic first, for every input; walks check the promises the tests state.' sha=a82a744d9eaa
+  stdout 'swiftformal — prove with logic first, for every input; walks check the promises the tests state.' sha=4b6601dcf6b8
   stderr '' sha=e3b0c44298fc
 swiftformal check --format pdf
   exit 2
@@ -165,7 +165,7 @@ swiftformal check --format
 swiftformal check --at Package.swift:3
   exit 2
   stdout '' sha=e3b0c44298fc
-  stderr 'check needs at least one --scan <package-dir>:<target>, or --build-log <file> --target <name>' sha=6ad2128049dd
+  stderr 'check needs at least one --scan <package-dir>:<target>, or --build-log <file> --target <name>' sha=431a348dc68e
 swiftformal check --at Package.swift
   exit 2
   stdout '' sha=e3b0c44298fc

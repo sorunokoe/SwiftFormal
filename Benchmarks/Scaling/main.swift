@@ -206,7 +206,7 @@ benchmark.addSimple(title: "Domain.combinations pairwise build (size = factors, 
     blackHole(d.count)
 }
 
-// Sampling: `n` draws through `random` from each combinator (what `verify` does when the domain exceeds the budget).
+// Sampling: `n` draws through `random` from each combinator (what a walk does when the domain exceeds the budget).
 @MainActor func sample<T>(_ title: String, _ domain: @escaping (Int) -> Domain<T>, maxSize: Int? = nil) {
     benchmark.add(title: "sample " + title, input: Int.self, maxSize: maxSize) { n in
         let d = domain(n)
@@ -231,7 +231,7 @@ sample("combinations pairwise, 12 factors of 5 (rows built once)") { _ in
     Domain<Int>.combinations(levels: Array(repeating: 5, count: 12), complete: false) { $0[0] }
 }
 
-// MARK: - SwiftFormal: verify, partition
+// MARK: - SwiftFormal: the walk, grouping outputs
 
 benchmark.addSimple(title: "verify walk, 2 per-input properties", input: Int.self) { n in
     let report = runWalk("double", { (x: Int) in x &* 2 }, over: .int(0...(n - 1))) {

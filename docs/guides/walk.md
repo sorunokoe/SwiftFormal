@@ -64,7 +64,7 @@ struct PricingTests { ... }
 
 ### How `swiftformal check` links a test to a function
 
-`swiftformal check` reads the function under test from the `it:` closure and runs the test, also when a contract on it
+`swiftformal check` reads the function under test from the `it:` closure and runs the test, also when a promise on it
 holds (a walk may promise more: a table, injectivity). A walk that covers only functions where logic already found a
 failing input is not run; it is listed under "Seen, not run". The test's name is never used.
 
@@ -223,8 +223,9 @@ A `Finite` type that cannot hold invalid values needs no `#requires`.
 
 ### Types from binary frameworks
 
-For a binary framework (Kotlin Multiplatform through SKIE, or any closed-source framework), `sfgen domains` writes the
-domains from the framework's symbol graph ([Generate](generate.md#domains-for-a-binary-framework)): a sealed hierarchy
+For a binary framework (Kotlin Multiplatform through SKIE, or any closed-source framework), `sfgen domains` (an
+internal tool, not part of the `swiftformal` command) writes the domains from the framework's symbol graph
+([Generate](generate.md#domains-for-a-binary-framework)): a sealed hierarchy
 is the union of its subclasses, a Kotlin `object` its `shared` singleton, a data class is built through its
 initializer from its fields' domains. Add the file to your test target:
 
@@ -239,17 +240,17 @@ initializer from its fields' domains. Add the file to your test target:
 - `Int`, `Double`, `String` and array fields are sampled at their boundaries (0, ±1, min, max, NaN, "", a non-ASCII
   string): `bounded`, never `proved`. Each generated domain says which in its doc comment.
 
-## `@Verify`: the same contract, also proved by Scan
+## `@Verify`: the same promise, also proved by Scan
 
-Write the contract in place, inside the function or computed property, with `import SwiftFormal`. `@Verify` turns
+Write the promise in place, inside the function or computed property, with `import SwiftFormal`. `@Verify` turns
 `#requires` and `#ensures` into checks in the body, and adds:
 
 - `verify_<name>()`: walks the domain you gave.
 - `<name>_requires` and `<name>_ensures`: `swiftformal check` proves them on the compiled function for **every** input
-  ([Scan guide](scan.md)). A walk over `0 ... 1_000` can pass while a contract breaks at `Int.min`; Scan finds that
-  input.
+  ([Scan guide](scan.md)). A walk over `0 ... 1_000` can pass while a promise breaks at `Int.min`; Scan finds that
+  input. You never write these two yourself.
 
-This is the only contract Scan reads. A hand-written `<name>_requires` / `<name>_ensures` is not read, and Scan,
+This is the only promise Scan reads. A hand-written `<name>_requires` / `<name>_ensures` is not read, and Scan,
 `swiftformal check --gate` and the editor say so ("contract not read: … write the contract in place with @Verify,
 #requires and #ensures").
 
@@ -259,7 +260,7 @@ Scan proves it for every `self`.
 
 ### On a computed property
 
-`@Verify` on a computed property applies to its getter. Write the getter's code after the contract; one expression
+`@Verify` on a computed property applies to its getter. Write the getter's code after the promise; one expression
 needs no `return`:
 
 ```swift
@@ -282,7 +283,7 @@ a property without a setter or a function.
 
 ### When there is nothing to walk
 
-`@Verify` writes no `verify_<name>()`, only the checks and the contract Scan proves, for:
+`@Verify` writes no `verify_<name>()`, only the checks and the promise Scan proves, for:
 
 - a computed property, and a function without parameters;
 - a `mutating` method;
@@ -302,11 +303,11 @@ Without `DEBUG`, the body runs as you wrote it. SwiftPM and Xcode's default Debu
 
 | | Debug (`DEBUG` defined) | Release (no `DEBUG`) |
 |---|---|---|
-| Checks in the body, copy of `self` | yes: a broken contract stops at `assertionFailure` | no |
+| Checks in the body, copy of `self` | yes: a broken promise stops at `assertionFailure` | no |
 | `verify_<name>()` | walks and checks each `#ensures` | the same: it checks them itself |
 | `<name>_requires`, `<name>_ensures` (what Scan proves) | yes | yes |
 
-So `swift test -c release` finds the same broken contracts as a debug run, and Scan proves the same contract at
+So `swift test -c release` finds the same broken promises as a debug run, and Scan proves the same promise at
 `-Onone` and with `-O`.
 
 `@Verify(checks: .always)` (or `@Verify(over: …, checks: .always)`) keeps the checks in every build. A failing check
@@ -390,10 +391,10 @@ whatever its walk says. Two fixes:
 | Product | Contents |
 |---|---|
 | `SwiftFormal` | app code: the core and the `@Verify` macros (the macro plugin uses swift-syntax and is never linked into an app) |
-| `SwiftFormalTesting` | tests: `Prove`, needs the Testing module; re-exports the symbolic integer proofs ([Prove guide](prove.md)) |
+| `SwiftFormalTesting` | tests: `Prove`, needs the Testing module; re-exports symbolic proofs (`SFProve`, [guide](prove.md)) |
 | `swiftformal` | the command: `check`, `doctor`, `lsp`, `strings` |
 
-Validated on 314 real `Rule` types of a production iOS app (the raw data is not public).
+Validated on 314 real `Rule` types of a real iOS app (the raw data is not public).
 Design and limits: `archive/design/specs/2026-11-05-swiftformal-product-design.md`.
 
 ## Migrating from the pre-release names

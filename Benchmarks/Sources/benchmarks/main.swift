@@ -36,20 +36,20 @@ func measure(_ name: String, _ body: () throws -> Void) rethrows {
 
 print("SwiftFormal benchmarks (best of \(repeats), wall time, informational)")
 
-measure("verify 1M inputs, no properties") {
+measure("Prove walk, 1M inputs, no properties") {
     keep(runWalk("triple", triple, over: .int(0...999_999)))
 }
-measure("verify 1M inputs, two properties") {
+measure("Prove walk, 1M inputs, two properties") {
     keep(
         runWalk("triple", triple, over: .int(0...999_999)) {
             Property.deterministic()
             Property.satisfies("multiple of 3") { _, y in y % 3 == 0 }
         })
 }
-measure("verify 1M inputs of a 3-field product") {
+measure("Prove walk, 1M inputs of a 3-field product") {
     keep(runWalk("sum", { (t: (Int, Int, Int)) in t.0 &+ t.1 &+ t.2 }, over: .product(.int(0...99), .int(0...99), .int(0...99))))
 }
-measure("verify 1M sampled inputs of a 10M domain") {
+measure("Prove walk, 1M sampled inputs of a 10M domain") {
     keep(runWalk("triple", triple, over: .int(0...9_999_999)))
 }
 /// About a microsecond of dependent multiply-adds, so the walk's own cost is small next to the function's.
@@ -59,16 +59,16 @@ measure("verify 1M sampled inputs of a 10M domain") {
     return Int(truncatingIfNeeded: value >> 1)
 }
 let cores = ProcessInfo.processInfo.activeProcessorCount
-measure("verify 200k inputs, 1 us function, serial") {
+measure("Prove walk, 200k inputs, 1 us function, serial") {
     keep(runWalk("burn", burn, over: .int(0...199_999)) { Property.satisfies("non-negative") { _, y in y >= 0 } })
 }
-measure("verify 200k inputs, 1 us function, all cores") {
+measure("Prove walk, 200k inputs, 1 us function, all cores") {
     keep(
         runWalk("burn", burn, over: .int(0...199_999), parallelism: .threads(cores)) {
             Property.satisfies("non-negative") { _, y in y >= 0 }
         })
 }
-measure("verifyContracts 100k inputs") {
+measure("@Verify walk (verify_<name>), 100k inputs") {
     keep(
         _verifyContracts(
             "clamped",
@@ -93,23 +93,23 @@ measure("Contract.requires, 1M calls, opaque condition") {
     }
     keep(total)
 }
-measure("verify 1M inputs, int domain through 3 maps") {
+measure("Prove walk, 1M inputs, int domain through 3 maps") {
     keep(runWalk("triple", triple, over: Domain<Int>.int(0...999_999).map { $0 &+ 1 }.map { $0 &- 1 }.map { $0 ^ 0 }))
 }
-measure("verify 1M inputs, struct domain (map of 2-product)") {
+measure("Prove walk, 1M inputs, struct mapped from a product") {
     struct Point { var x: Int; var y: Int }
     keep(
         runWalk(
             "sum", { (p: Point) in p.x &+ p.y },
             over: Domain<(Int, Int)>.product(.int(0...999), .int(0...999)).map { Point(x: $0.0, y: $0.1) }))
 }
-measure("verify 32k inputs of a union of 2,000 parts") {
+measure("Prove walk, 32k inputs of a union of 2,000 parts") {
     keep(runWalk("triple", triple, over: .union((0..<2_000).map { Domain<Int>.int($0 * 100...$0 * 100 + 15) })))
 }
-measure("partition 100k inputs into 20k outputs") {
+measure("runPartition 100k inputs into 20k outputs") {
     keep(runPartition({ (x: Int) in x % 20_000 }, over: .int(0...99_999)))
 }
-try measure("prove: 16-bit discount (proveSigned)") {
+try measure("SFProve proveSigned: 16-bit discount") {
     keep(
         try proveSigned(
             widths: [16, 16],
@@ -119,9 +119,9 @@ try measure("prove: 16-bit discount (proveSigned)") {
             return result >= 0 && result <= v[0]
         })
 }
-try measure("prove: 32-bit a*b == b*a up to 20k conflicts") {
+try measure("SFProve prove: 32-bit a*b == b*a, 20k conflicts") {
     keep(try prove(inputWidths: [32, 32], conflictBudget: 20_000) { c, v in c.eq(c.mul(v[0], v[1]), c.mul(v[1], v[0])) })
 }
-measure("prove, 0-conflict budget: 64-bit a*b == b*a (encoding)") {
+measure("SFProve prove: 64-bit a*b == b*a, encoding only") {
     keep(try? prove(inputWidths: [64, 64], conflictBudget: 0) { c, v in c.eq(c.mul(v[0], v[1]), c.mul(v[1], v[0])) })
 }

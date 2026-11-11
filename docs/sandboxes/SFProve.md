@@ -1,4 +1,4 @@
-# SFProve: Prove, whole integer ranges
+# SFProve: symbolic proofs, whole integer ranges
 
 **Job (Inspector view):** the structural engineer who proves a claim for all values at once, instead of walking every room. A second engineer (`SFCheck`) must countersign every certificate.
 **Raw input → typed → result:** a claim over signed integers of given widths (`proveSigned`, `SymbolicInt`, `SymbolicBool`) → `SFBV` encodes, `SFSAT` solves, `SFCheck` checks → `.proved` / `.mayTrap(inputs)` / `.claimFails(inputs)` / `.unknown`.

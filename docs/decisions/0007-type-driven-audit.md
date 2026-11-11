@@ -10,7 +10,7 @@ Phase 7B, Task Q.3: make illegal states unrepresentable and let the compiler fin
 
 `Package.swift` defines `strictSettings` once: `ExistentialAny`, `InternalImportsByDefault`, `MemberImportVisibility`. The language mode stays Swift 6.
 
-It is applied to every library and executable module: `SwiftFormal`, `SwiftFormalContracts`, `SwiftFormalTesting`, `SFCNF`, `SFSAT`, `SFCheck`, `SFBV`, `SFProve`, `SFSemantics`, `SFSIL`, `SFLLVM`, `SFVerifyKit`, `sfverify`, `SFGenKit`, `sfgen`. It is not applied to the macro target (its imports come from SwiftSyntax macros) or to test targets. One commit per module group, each green on the safety net.
+It is applied to every library and executable module: `SwiftFormal`, `SwiftFormalContracts` (since folded into `SwiftFormal`), `SwiftFormalTesting`, `SFCNF`, `SFSAT`, `SFCheck`, `SFBV`, `SFProve`, `SFSemantics`, `SFSIL`, `SFLLVM`, `SFVerifyKit`, `sfverify`, `SFGenKit`, `sfgen`. It is not applied to the macro target (its imports come from SwiftSyntax macros) or to test targets. One commit per module group, each green on the safety net.
 
 - No module needed a behavior change. Every fix was an import access level.
 - `ExistentialAny` and `MemberImportVisibility` produced no error in any module.

@@ -10,7 +10,7 @@ agree to the [Code of Conduct](CODE_OF_CONDUCT.md). Contributions are licensed u
   Another compiler builds the package and runs the fast lane; oracle tests skip with a printed reason.
 - `git clone https://github.com/sorunokoe/SwiftFormal.git`, then `swift build`. Nothing else is needed to build and run
   the fast lane.
-- Not touching `sfgen`? `swift build --disable-default-traits --scratch-path .build/notraits` leaves out sfgen's
+- Not touching `sfgen` (the internal generator)? `swift build --disable-default-traits --scratch-path .build/notraits` leaves out sfgen's
   swift-syntax reader (the `Generator` trait). The `@Verify` macro still needs swift-syntax, so the saving is small.
   Its own scratch path keeps your main `.build` from rebuilding.
 - Optional: `brew install swiftlint` (CI always runs it), and `Scripts/install-hooks.sh` (blame-ignore setting and a

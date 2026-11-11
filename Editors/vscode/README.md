@@ -5,7 +5,8 @@ checks the code and shows:
 
 - a code lens per function: `✓ proved`, `✓ cannot crash`, `✗ counterexample`, `? unchecked: <reason>`, `⚠ stale`;
 - counterexamples as diagnostics, details on hover;
-- code actions: replay a counterexample as a test, add a contract, a `Prove(it:over:)` skeleton;
+- code actions: replay a counterexample as a test, add a promise (`@Verify`, `#requires`, `#ensures`), add a
+  `Prove(it:over:)` test;
 - every verdict in the Test Explorer (publish-only: save or run **SwiftFormal: Check Now**). Stale and unchecked show
   as skipped, never passed.
 
@@ -32,7 +33,7 @@ Then **Developer: Install Extension from Location…**, pick this folder, and se
 | `swiftformal.scan` | `[]` | `--scan` targets, `<package-dir>:<target>`, relative to the workspace folder. Empty: the target of the saved file. |
 | `swiftformal.tests` | `""` | The `--tests` target with the walks. Empty: no walks. |
 | `swiftformal.walks` | `true` | Run the walks of `swiftformal.tests`. |
-| `swiftformal.budget` | `null` | The prover's conflict budget per function. |
+| `swiftformal.budget` | `null` | Scan's solver conflict budget per function (`--budget`). |
 
 A `swiftformal.json` in the workspace folder wins over these settings (same keys, without the prefix).
 

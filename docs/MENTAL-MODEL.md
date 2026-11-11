@@ -9,65 +9,69 @@ you get: a certificate, a spot-check note, or a crack report with the room numbe
 | Inspector world | SwiftFormal word | Where it lives |
 |---|---|---|
 | The building (not the blueprint) | the real compiled function | your code |
-| The floor plan: every room | `Domain` | `SwiftFormal` |
-| The building code (rules) | `Property`, `Contract` (`#requires`, `#ensures`) | `SwiftFormal` |
-| Inspector walks every room | `Prove(it:over:)`: **Walk** (Tier 1) | `SwiftFormalTesting` |
-| **Certificate** (all rooms visited) | `proved` | `Verdict` |
-| **Spot-check note** (only some rooms) | `bounded` (sample or over budget) | `Verdict` |
-| **Crack with a room number** (replayable) | `counterexample` | `Verdict` |
-| Too many rooms (2^64): an engineer proves it from the plans | **Prove** (Tier 2): SAT solver on bit-vectors | `SFProve` |
+| The building code (rules) | the promise: `@Verify` with `#requires` and `#ensures` | `SwiftFormal` |
+| An engineer checks every room from the plans, without walking in | **Scan**, "the logic": `swiftformal check` reads the compiler's SIL | the `swiftformal` command |
 | A second, independent engineer countersigns | the independent proof checker | `SFCheck` |
-| "Could anything collapse?", no code book needed | **Scan** (`swiftformal check`): can this function trap? | the `swiftformal` command |
-| The inspector declines to sign what they cannot inspect | `unsupported` (fail closed, never guess) | reports |
-| Occupancy permit: no permit, no move-in | the **Build Gate**, `swiftformal check --gate` | the `swiftformal` command |
+| Where the plans cannot be read: the inspector walks every room | **Walk**: `Prove(it:over:)` in a test, `verify_<name>()` from `@Verify` | `SwiftFormalTesting`, `SwiftFormal` |
+| The floor plan: every room to walk | `Domain` | `SwiftFormal` |
+| **Certificate** (every room checked) | `proved` | the report |
+| **Spot-check note** (only some rooms) | `bounded` (a sample, or out of budget) | the report |
+| **Crack with a room number** (replayable) | `counterexample` | the report |
+| The inspector declines to sign what they cannot inspect | `unchecked`, `unsupported`, `undecided` (fail closed, never guess) | the report |
+| Occupancy permit: no permit, no move-in | the **gate**, `swiftformal check --gate` | the `swiftformal` command |
 | Permit on file, reused only if nothing changed | proof cache | `SFSIL/ProofCache` |
-| "Does the code catch a deliberately bad building?" | spec audit (mutants) | `SpecAudit` |
+| "Does the code catch a deliberately bad building?" | spec audit (`swiftformal check --mutate`) | `SpecAudit` |
+| A structural calculation for one beam, by hand | **symbolic proofs** (preview): `proveSigned` on a `SymbolicInt` copy | `SFProve` |
 | The inspector's stated limits | the **trust ledger**: compiler, the domain you described | `docs/TRUST.md` |
 
-## Three tools, one verdict vocabulary
+## Three engines, one set of answers
 
-| Tool | Question it answers | Verdict words | Evidence line (planned, not printed yet) |
-|---|---|---|---|
-| **Walk** `Prove` | "Does this rule hold for every input I listed?" | proved / bounded / counterexample | `walked 1,001 of 1,001 inputs of the real function` |
-| **Prove** `SFProve` | "Does it hold for *all* values of these integer widths?" | proved / counterexample / unknown | `SAT proof, accepted by the independent LRAT checker` |
-| **Scan** `swiftformal check` | "Can this function trap, and does its plain-Swift contract hold?" | safe / mayTrap / contractHolds / contractFails / undecided / unsupported | `read from compiler SIL (swiftc 6.4), proof checked` |
+`swiftformal check` asks Scan first, then runs the walks linked to each function: a walk covers code Scan cannot read,
+and can state a promise Scan does not check (a table, injectivity). Walks of functions Scan already showed broken are
+skipped. Each function then gets one answer: `proved`, `counterexample`, `bounded` or `unchecked`.
 
-Rule for every doc and error message: **name the tool (Walk, Prove, Scan), then the verdict, then the evidence.**
-
-```
-                 your real Swift function
-                           |
-      +--------------------+---------------------+
-      |                    |                     |
-    WALK                 PROVE                 SCAN
-(Prove(it:over:),    (proveSigned,         (swiftformal check,
-   Tier 1)              Tier 2)               Tier 3)
- runs the function    SAT solver on         reads compiler SIL,
- on every input       bit-vectors, for      asks "can it trap?"
- you listed           all integer values
-      |                    |                     |
-      v                    v                     v
- proved                proved                safe / contractHolds
- bounded               counterexample        mayTrap / contractFails
- counterexample        unknown               undecided
-                                             unsupported (declined)
-```
-
-| Tool | Strength | Cost |
+| Engine | Question it answers | Its own verdicts |
 |---|---|---|
+| **Scan** `swiftformal check` | "Can this function trap, and does its `@Verify` promise hold, for every input?" | safe / mayTrap / contractHolds / contractFails / undecided / unsupported |
+| **Walk** `Prove(it:over:)`, `verify_<name>()` | "Does this rule hold for every input I listed?" | proved / bounded / counterexample |
+| **Symbolic proofs** `SFProve` (preview) | "Does it hold for *all* values of these integer widths?" | proved / mayTrap / claimFails / unknown |
+
+Rule for every doc and error message: **name the engine, then the answer, then the evidence.**
+
+```
+                    your real Swift function
+                              |
+         +--------------------+---------------------+
+         |                    |                     |
+       SCAN                 WALK              SYMBOLIC PROOFS
+  (swiftformal check)  (Prove(it:over:),      (proveSigned,
+                        verify_<name>())        preview)
+  reads compiler SIL,  runs the function      SAT solver on
+  every input          on every input         bit-vectors, for
+                       you listed             all integer values
+         |                    |                     |
+         v                    v                     v
+  safe / contractHolds  proved                proved
+  mayTrap / contractFails  bounded            mayTrap / claimFails
+  undecided             counterexample        unknown
+  unsupported (declined)
+```
+
+| Engine | Strength | Cost |
+|---|---|---|
+| Scan | reads the compiler's output; every input; no spec needed to find traps | understands a part of Swift, says `unsupported` for the rest |
 | Walk | runs the function itself, no model of Swift | needs a finite list of inputs |
-| Prove | covers whole integer ranges | works on a symbolic copy of the body that you write |
-| Scan | reads the compiler's output, no spec to write | understands a small part of Swift, says `unsupported` for the rest |
+| Symbolic proofs | covers whole integer ranges | works on a copy of the body that you write |
 
 ## What the certificate does *not* cover
 
 Outside a `proved`:
 
-- **The compiler.** Walk runs, and Scan reads, what the compiler produced. If the compiler is wrong, SwiftFormal does
+- **The compiler.** Scan reads, and Walk runs, what the compiler produced. If the compiler is wrong, SwiftFormal does
   not know. Scan results are stated for one pinned compiler version.
-- **The `Domain` you wrote.** `proved` means "every input in the domain". It says nothing about inputs the domain
-  leaves out, or that a too-strong `#requires` excludes. The report prints the domain size.
-- **Strings.** A domain can list some strings, not all of them. A domain with strings is reported as `bounded`,
+- **The `Domain` you wrote.** A walk's `proved` means "every input in the domain". It says nothing about inputs the
+  domain leaves out. Neither engine checks inputs a too-strong `#requires` excludes. The report prints the domain size.
+- **Strings in a walk.** A domain can list some strings, not all of them. A walk over strings is reported as `bounded`,
   unless the function only passes the string through and the property is about the other fields.
 - **Traps in a Walk.** A Swift trap (overflow, force unwrap) cannot be caught in-process: it stops the whole test run,
   and you see the run end, not a `counterexample`. On macOS and Linux, `await Prove(neverTraps:)` walks in a Swift

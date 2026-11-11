@@ -13,7 +13,7 @@ an exact count**:
 | `cnfVariables` | `SolveStats.variables` | Variables of the formula given to the solver. |
 | `cnfClauses` | `CNFBuilder.cnf` | Original clauses (not learned) of the whole formula the encoder built. The solver gets only the goal's cone (`CNFCone`). |
 
-- `sfverify --json --stats` adds the three counts to each function that reaches the solver
+- `sfverify --json --stats` (`sfverify` is the internal engine command, built from a checkout) adds the three counts to each function that reaches the solver
   ([the JSON report](guides/scan.md#the-json-report---json-schema-version-1)). Without `--stats` the keys are absent.
 - Budget ran out: `conflicts = budget + 1`, verdict `undecided`.
 - The counts depend on the solver, the encoder and the semantics, not on the machine. A change there must show its
@@ -66,12 +66,9 @@ Recorded 2026-11-05 (Apple M4 Pro, Apple Swift 6.4, release `sfverify`):
 
 [`Benchmarks/`](../Benchmarks) is a separate package (users never fetch it). It times the walk behind `Prove` and the
 one behind `verify_<name>()` (package functions, reached with `@testable import`), `Contract.requires`, grouping
-outputs and two `prove` runs. `swift run -c release -Xswiftc -enable-testing -Xlinker -rpath -Xlinker "$(xcrun --show-sdk-platform-path)/Developer/Library/Frameworks" --package-path Benchmarks benchmarks`
+outputs and three symbolic proofs (`SFProve`'s `proveSigned` and `prove`). `swift run -c release -Xswiftc -enable-testing -Xlinker -rpath -Xlinker "$(xcrun --show-sdk-platform-path)/Developer/Library/Frameworks" --package-path Benchmarks benchmarks`
 prints the best of five (the rpath finds the Testing.framework that SwiftFormalTesting links); `--only <text>` and
 `--repeat <n>` narrow it. Nothing fails on these numbers.
-
-`swift run -c release --package-path Benchmarks benchmarks` prints the best of five. `--only <text>` and `--repeat <n>`
-narrow it.
 
 All results: Apple M4 Pro, Apple Swift 6.4.
 
@@ -83,11 +80,11 @@ All results: Apple M4 Pro, Apple Swift 6.4.
 | `runWalk` (behind `Prove`), 1 000 000 inputs, two properties | 221 ms | 54 ms |
 | `runWalk` (behind `Prove`), 1 000 000 inputs of a 3-field product | 195 ms | 28 ms |
 | `runWalk` (behind `Prove`), 1 000 000 sampled inputs | 137 ms | 19 ms |
-| `_verifyContracts` (behind `verify_<name>()`), 100 000 inputs | 30 ms | 8 ms |
+| `@Verify` walk (`verify_<name>`), 100 000 inputs | 30 ms | 8 ms |
 | `Contract.requires`, 1 000 000 calls | 10.6 ms | 1.8 ms |
 | `runPartition`, 100 000 inputs into 20 000 outputs | 41.2 s | 15 ms |
-| `proveSigned`, 16-bit discount | 69 ms | 66 ms |
-| `prove`, 32-bit `a*b == b*a` to 20 000 conflicts | 1.15 s | 1.08 s |
+| `proveSigned` (`SFProve`), 16-bit discount | 69 ms | 66 ms |
+| `prove` (`SFProve`), 32-bit `a*b == b*a` to 20 000 conflicts | 1.15 s | 1.08 s |
 
 **2026-11-07**, best of 3, loaded machine:
 
@@ -126,7 +123,7 @@ its own recheck fix (1eaa769).
 | `swiftformal check` on `Examples/Walk`, warm | 7.9 s | 6.5 s | 6.5 s |
 | `SILText.prepare`, 4 096 functions (scaling harness) | 0.97 s | | 0.38 s |
 | `SILModule(text:)`, 4 096 functions (scaling harness) | 0.47 s | | 0.10 s |
-| `Table` of 8 192 rows (scaling harness) | about 9 s | | 3 ms |
+| `Matches(table:)` with 8 192 rows (scaling harness) | about 9 s | | 3 ms |
 
 At `-Onone`, Scan now compiles and verifies two configurations (debug and `-assert-config Release`): about twice the
 work of 2026-11-07. The second compile runs alongside the first.
@@ -139,7 +136,7 @@ work of 2026-11-07. The second compile runs alongside the first.
 | `sfverify` on a generated module of 8 192 functions (recheck rendered on several threads) | 13.2 s | 10.6 s |
 | `sfverify --package . --target SFSIL --build` (same) | 10.3 s | 8.6 s |
 | `swiftformal check` on `Examples/Walk`, warm (one build with the tests) | 7.2 s | 4.6 s |
-| `swiftformal check --gate` (then `verify`) of two targets after a `swift build` (one package build) | 4.6 s | 3.5 s |
+| `swiftformal check --gate` of two targets after a `swift build` (one package build) | 4.6 s | 3.5 s |
 
 ## Scanning a multi-package app
 
@@ -252,7 +249,7 @@ The first runs found five steps that grew faster than their input (contract matc
   `perl -e 'alarm 90; exec @ARGV' xcrun xctrace record --template 'Time Profiler' --time-limit 5s --launch -- <binary> ...`.
   CPU Counters works too (`xctrace export` reads its tables). Processor Trace needs the terminal in System Settings >
   Privacy & Security > Developer Tools.
-- **Is a generic call specialized?** `nm -u <caller>.o | swift demangle`. An undefined generic symbol (`verify<A, B>`)
+- **Is a generic call specialized?** `nm -u <caller>.o | swift demangle`. An undefined generic symbol (`runWalk<A, B>`)
   means the unspecialized body runs. Public generic entry points are unspecialized in users' modules unless
   `@inlinable`, so keep their per-input state in non-generic storage (`ContiguousArray<Bool>`, not an array of a
   generic struct).

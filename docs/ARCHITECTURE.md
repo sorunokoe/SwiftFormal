@@ -8,7 +8,7 @@ Modules, allowed dependencies, how a Scan request flows, and where to add things
 
 | Layer | Modules | Rule |
 |---|---|---|
-| **Front doors** (the three products: public, documented, versioned) | `SwiftFormal` (app code: Walk, `@Verify`, `#requires`, `#ensures`), `SwiftFormalTesting` (tests: `Prove`, the one way to walk, and the `SFProve` facade, which it re-exports), the `swiftformal` command (`check`, `check --gate`, `doctor`, `lsp`, `strings`) | `public`; every public declaration has a `///` comment (`Scripts/check-doc-coverage.py`) |
+| **Front doors** (the three products: public, documented, versioned) | `SwiftFormal` (app code: Walk, `@Verify`, `#requires`, `#ensures`), `SwiftFormalTesting` (tests: `Prove`, the one way to walk, and symbolic proofs, the `SFProve` facade, which it re-exports), the `swiftformal` command (`check`, `check --gate`, `doctor`, `lsp`, `strings`) | `public`; every public declaration has a `///` comment (`Scripts/check-doc-coverage.py`) |
 | **Maintainers' tools** (executable targets, no product) | `sfverify` (Scan, for the golden scan, metrics, corpus and mutation lanes), `sfgen` | built from a checkout (`swift build --product sfverify`). Their flags and the scan `--json` [schema](schemas/scan-report.schema.json) are recorded by `Scripts/check-cli.py` |
 | **Engine room** | `SFCNF`, `SFSAT`, `SFCheck`, `SFBV`, `SFSemantics`, `SFSIL`, `SFLLVM`, `SFVerifyKit`, `SFGenKit`, `SFLanguageServer`, `SwiftFormalMacros` | `package` access, so outside code cannot use them ([ADR 0003](decisions/0003-package-access-for-engines.md)). None of them is a product. |
 | **Test support** | `SFTestSupport` (`Tests/Support`) | test tags only; production code never imports it |
@@ -40,7 +40,7 @@ SFCNF  <--  SFSAT, SFCheck, SFBV  <--  SFProve  <--  SFSIL  <--  SFVerifyKit  <-
                     SFBV  <--  SFSemantics  <--  SFSIL            (SFLLVM sits beside SFSIL)
 
 SFGenKit  <--  sfgen
-SFVerifyKit  <--  SFLanguageServer  <--  swiftformal (check, doctor, lsp)  -->  SFVerifyKit
+SFVerifyKit  <--  SFLanguageServer  <--  swiftformal (check, doctor, lsp, strings)  -->  SFVerifyKit
 ```
 
 An arrow means "is imported by". Allowed edges: `Scripts/sandboxes.py`; `Scripts/check-layering.py` fails on any other
@@ -65,8 +65,8 @@ edge in `Package.swift`.
 3. **Parse.** `SILModule(text:)` (`Sources/SFSIL/SILParser.swift`) reads blocks and instructions. Anything it does not
    understand makes the function `unsupported`, with the reason.
 4. **Encode, per function, in parallel.** `Verifier.run` (`Sources/SFVerifyKit/Verify.swift`) builds one claim: *if
-   `f_requires` holds, then `f` does not trap and `f_ensures` holds*. Only the `f_requires` / `f_ensures` that
-   `@Verify` wrote count (`SpecIndex` in `VerifySupport.swift`, `FunctionInfo.isVerifyPeer`); a hand-written one is
+   `<name>_requires` holds, then `<name>` does not trap and `<name>_ensures` holds*. Only the peers that `@Verify`
+   wrote count (`SpecIndex` in `VerifySupport.swift`, `FunctionInfo.isVerifyPeer`); a hand-written one is
    listed in `FunctionReport.ignoredContracts` and never read. `SILEncoder.encode` (`Sources/SFSIL/SILEncoder.swift`)
    builds the claim, with `CNFBuilder` (`Sources/SFBV/CNFBuilder.swift`) for circuits and `S0`
    (`Sources/SFSemantics/S0.swift`) for builtin operations.
@@ -84,7 +84,7 @@ edge in `Package.swift`.
 - **Build gate** (`swiftformal check --gate`, `Sources/SwiftFormalCLI/GateCommand.swift` with `BuildCheck` in
   `Sources/SFVerifyKit`): the same flow for the `@Verify` functions of each target, planned from a SwiftPM build or a
   build log (`--build-log`). Every result that is not proved becomes a compiler error or warning.
-  `Sources/SFVerifyKit/Gate.swift` is the same rule for `sfverify --gate`.
+  `Sources/SFVerifyKit/Gate.swift` is the same rule for the internal `sfverify --gate`.
 - **`swiftformal check`** runs steps 1–6 per `--scan` target (`Check.scan` in `Sources/SFVerifyKit/CheckScans.swift`,
   scheduled by `ScanSchedule.swift`). Different packages run at the same time (`--jobs`). Targets of one package run in
   order: they share its `.build`, SwiftPM's lock and the saved build commands. Parallel targets share one compiler
@@ -113,9 +113,10 @@ Then:
 - `Verifier` looks the key up in `ScanProofCache` (`Sources/SFVerifyKit/ScanProofCache.swift`; file checks in
   `TrustedFiles.swift`). A stored proof replaces steps 4–5. A stored counterexample is replayed first.
 - Only checked proofs and replayed counterexamples are stored.
-- Everything after step 5 (caller exclusivity, configuration merging, `--llvm-check`) runs as without the cache.
-- Not used by loop proofs, `--modular` or the gate.
-- `ProofCache.swift`/`CachedVerifier.swift` in `SFSIL` cache Prove's claim, not Scan's.
+- Everything after step 5 (caller exclusivity, configuration merging, `sfverify --cross-check`) runs as without the
+  cache.
+- Not used by loop proofs or `sfverify --modular`.
+- `CachedVerifier.swift` in `SFSIL` caches one SIL claim outside Scan; only `ProofCacheTests` uses it.
 
 ## Recipes
 

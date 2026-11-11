@@ -9,16 +9,16 @@ Last checked: 2026-11-05, Xcode with Swift 6.4, destination `generic/platform=iO
 
 | Part | Targets | macOS | iOS |
 |---|---|---|---|
-| **Walk** | `SwiftFormal`, `SwiftFormalTesting` | yes | builds |
-| **Prove** | `SFProve` (re-exported by `SwiftFormalTesting`) and the SAT kernel it needs: `SFCNF`, `SFSAT`, `SFCheck`, `SFBV` | yes | builds |
-| Prove's translation table | `SFSemantics` | yes | builds |
 | **Scan** | `SFSIL`, `SFVerifyKit`, the `swiftformal` command | yes | **no** |
+| Scan's builtin semantics | `SFSemantics` | yes | builds |
 | Second reader | `SFLLVM` | yes | **no** |
-| **Gate** | `swiftformal check --gate`, `SwiftFormalMacros` (compiler plugin) | yes | n/a: runs on the Mac that builds your app |
-| Generator (maintainers) | `SFGenKit`, `sfgen` (no product) | yes | n/a: a build-time tool |
+| **Walk** | `SwiftFormal`, `SwiftFormalTesting` | yes | builds |
+| **Symbolic proofs** | `SFProve` (re-exported by `SwiftFormalTesting`) and the SAT kernel it needs: `SFCNF`, `SFSAT`, `SFCheck`, `SFBV` | yes | builds |
+| **Gate**, `@Verify` macros | `swiftformal check --gate`, `SwiftFormalMacros` (compiler plugin) | yes | n/a: runs on the Mac that builds your app |
+| Generator (internal) | `SFGenKit`, `sfgen` (no product) | yes | n/a: a build-time tool |
 
 - **Scan runs at build time on a Mac. It is not shipped inside an iOS app.**
-- Walk and Prove can be linked into an iOS app or its tests.
+- Walk and symbolic proofs can be linked into an iOS app or its tests.
 - "Builds" means the library compiles for the simulator. It does **not** mean tests ran on a simulator: they did not
   (see [Not verified](#not-verified)).
 

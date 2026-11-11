@@ -5,8 +5,8 @@ printed on failure.
 
 | What | Where | Lane | Rule |
 |---|---|---|---|
-| Zoo for Walk, `prove`, `proveSigned` | `Tests/SoundnessZooTests/ZooTests.swift` | fast | A wrong claim is never proved; every counterexample fails again when replayed on plain Swift; true controls are proved. |
-| Zoo for Scan (`sfverify`) | `Tests/SFOracleTests/ScanZooTests.swift` | oracle | A wrong function is never `safe`; every `mayTrap` input traps in the compiled function; every `safe` function survives a sweep of edge inputs; a hand-written `_requires` / `_ensures`, even a false one, is never read as a contract (`contractNotRead`, `ScanZooContractEntries.swift`). |
+| Zoo for Walk and symbolic proofs (`prove`, `proveSigned`) | `Tests/SoundnessZooTests/ZooTests.swift` | fast | A wrong claim is never proved; every counterexample fails again when replayed on plain Swift; true controls are proved. |
+| Zoo for Scan | `Tests/SFOracleTests/ScanZooTests.swift` | oracle | A wrong function is never `safe`; every `mayTrap` input traps in the compiled function; every `safe` function survives a sweep of edge inputs; a hand-written `_requires` / `_ensures`, even a false one, is never read as a contract (`contractNotRead`, `ScanZooContractEntries.swift`). |
 | SAT solver against brute force | `Tests/SoundnessZooTests/SATDifferentialTests.swift` | fast | Same SAT/UNSAT answer as exhaustive enumeration; every model satisfies the formula; every UNSAT proof passes the RUP and LRAT checkers. |
 | Metamorphic SAT | same file | fast | Clause permutation, variable renaming, polarity flip and clause duplication never change the answer. |
 | Parser and checker fuzz | `Tests/SoundnessZooTests/ParserFuzzTests.swift` | fast | Truncated and mutated SIL, LLVM IR and LRAT text give a result or a typed error (no crash, no hang); a checker never accepts a proof of a satisfiable formula. |

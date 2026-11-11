@@ -1,49 +1,48 @@
 # ``SwiftFormal``
 
-Check your real function over every input you list, and get an honest verdict.
+Write a promise next to a function, and get an honest answer for every input.
 
 ## Overview
 
-SwiftFormal inspects your *real* function the way a building inspector inspects a *real* building: it walks every room, and then tells you honestly whether you get a certificate, a spot-check note, or a crack report with the room number.
-
-This module is **Walk**, the first of three tools. You describe the inputs with a ``Domain`` (the floor plan: every room), state what must hold with ``Property`` values (the building code), and walk it: with `@Verify` on the function, whose `verify_<name>()` walks the inputs, or in a test with `Prove` from `SwiftFormalTesting`. The function itself runs on every input, so there is no model of Swift between you and the answer.
-
-| Verdict | In inspector words | Meaning |
-|---|---|---|
-| ``Verdict/proved(checked:)`` | the certificate | Every input of a complete domain was checked. |
-| ``Verdict/bounded(checked:reason:)`` | the spot-check note | It held for everything checked, but the domain is a sample or exceeded the budget. |
-| ``Verdict/counterexample(_:)`` | the crack report | It failed, and the input is a real input you can replay. |
-
-Here the function is `label(for:)` and its input is the enum `Speed`, which is `CaseIterable`. The test is in a Swift Testing test file and uses `Prove` from `SwiftFormalTesting`, the one way to walk in a test.
+This is the library for app code. Mark a function `@Verify` and write its promise inside it: `#requires` says what
+the inputs must be, `#ensures` what the result must be (`$0` is the result). A computed property takes its promise in
+the getter.
 
 ```swift
-@Test func everySpeedHasItsLabel() {
-    Prove(it: { label(for: $0) }, over: .allCases) {
-        Deterministic()
-        Matches(table: [
-            .standard: "Standard (3-5 days)",
-            .express: "Express (1-2 days)",
-            .overnight: "Overnight",
-        ])
-        Satisfies("never blank") { _, text in !text.isEmpty }
-    }
+@Verify(over: .product(.int(0...1_000), .int(0...100)))
+public func discounted(price: Int, percent: Int) -> Int {
+    #requires(price >= 0 && price <= 1_000_000 && percent >= 0 && percent <= 100)
+    #ensures { $0 >= 0 && $0 <= price }
+    return price - price * percent / 100
 }
 ```
 
-A `proved` here means "for every input in the domain you described". If the domain leaves out an input that matters, the certificate says nothing about it. A Swift trap (overflow, force unwrap) cannot be caught in-process; it stops the whole run. The repository's `docs/TRUST.md` lists everything this module does not cover.
-
-The same import has the contract macros. Write the promise inside the function with `#requires` and `#ensures`;
-``Verify()`` turns it into checks that Scan (`swiftformal check`) proves for every input:
+Scan (`swiftformal check`, or `swiftformal check --gate` as a build step) proves for every input that the function
+cannot trap and keeps its promise. `over:` is optional: it lists the inputs, a ``Domain``, of a walk that `@Verify`
+writes for your tests, `verify_discounted()`:
 
 ```swift
-@Verify
-func label(for speed: Speed) -> String {
-    #ensures { !$0.isEmpty }
-    speed == .overnight ? "Overnight" : "Standard"
+@Test func discountStaysInRange() {
+    #expect(verify_discounted().isProved)
 }
 ```
 
-The other two tools are in other modules: **Prove** (`SFProve`, which `SwiftFormalTesting` re-exports) covers whole integer ranges with a SAT solver, and **Scan** (`swiftformal check`) reads compiler output to ask whether a function can trap.
+Walk runs the real function on every input of the domain, so there is no model of Swift between you and the answer.
+It returns a ``Report`` with one ``Verdict`` per property:
+
+| Verdict | Meaning |
+|---|---|
+| ``Verdict/proved(checked:)`` | Every input of a complete domain was checked. |
+| ``Verdict/bounded(checked:reason:)`` | It held for everything checked, but the domain is a sample or exceeded the budget. |
+| ``Verdict/counterexample(_:)`` | It failed, and the input is a real input you can replay. |
+
+A walk's `proved` means "for every input in the domain you described". If the domain leaves out an input that
+matters, it says nothing about it. A Swift trap (overflow, force unwrap) cannot be caught in-process; it stops the
+whole run. The repository's `docs/TRUST.md` lists everything that is not covered.
+
+To walk a function in a test with your own properties (a table, `Deterministic()`, every session of a reducer), use
+`Prove` from `SwiftFormalTesting`. That library also brings symbolic proofs over whole integer ranges (`SFProve`, a
+preview).
 
 ## Topics
 

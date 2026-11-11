@@ -8,15 +8,20 @@ links to the rest.
 
 ## What this project is
 
-SwiftFormal checks Swift code, often code an AI wrote, and says honestly what it proved. Three tools:
+SwiftFormal checks Swift code, often code an AI wrote, and says honestly what it proved. Users get two libraries and
+one command: `SwiftFormal` (app code: `@Verify`, `#requires`, `#ensures`), `SwiftFormalTesting` (tests: `Prove(...)`)
+and `swiftformal` (`check`, `doctor`, `lsp`, `strings`). Behind them are three engines:
 
-- **Walk** (`SwiftFormal`, `SwiftFormalTesting`): runs the real function on every input of a domain you list.
-- **Prove** (`SFProve`): proves a claim for whole integer ranges, on a copy written with `SymbolicInt`.
-- **Scan** (`swiftformal check`, `SFVerifyKit` and the engine below it): reads the compiler's SIL and proves a function
-  cannot trap and keeps its `f_requires` ⇒ `f_ensures` contract, for every input.
+- **Scan**, "the logic" (`SFVerifyKit` and the engine below it): reads the compiler's SIL and proves, for every input,
+  that a function cannot trap and that its `@Verify` promise (`#requires` ⇒ `#ensures`) holds.
+- **Walk** (`SwiftFormal`, `SwiftFormalTesting`): runs the real function on every input you list. Users reach it
+  through `Prove(it:over:)` in tests and the `verify_<name>()` that `@Verify` writes.
+- **Symbolic proofs** (`SFProve`, a preview): a claim for whole integer ranges, on a copy written with `SymbolicInt`.
+  Never call it "Prove": `Prove` is the test API.
 
-`swiftformal check` runs Scan first, then only the walks logic still needs. `swiftformal check --gate` is the build gate,
-`swiftformal lsp` the editor server. Background: [README](README.md), [mental model](docs/MENTAL-MODEL.md),
+`swiftformal check` runs Scan first, then only the walks Scan still needs. `swiftformal check --gate` is the build
+gate, `swiftformal lsp` the editor server. `sfverify` and `sfgen` are internal tools for maintainers; user docs never
+tell users to run them. Background: [README](README.md), [mental model](docs/MENTAL-MODEL.md),
 [glossary](docs/GLOSSARY.md).
 
 ## Where things are
@@ -82,7 +87,8 @@ A false `proved` (or `safe`, `contractHolds`, a ✓ in the editor) is the worst 
   in the same change. A changed flow also updates [ARCHITECTURE](docs/ARCHITECTURE.md). A new word goes into the
   [glossary](docs/GLOSSARY.md).
 - Write docs in plain, short English. Every flag, field and verdict you name must exist in the code or the `--help`
-  output; check it.
+  output; check it. Use the words of the [glossary](docs/GLOSSARY.md) and the README; names removed before 0.1.0
+  appear only in the [migrating table](docs/guides/walk.md#migrating-from-the-pre-release-names).
 - No home-directory paths, emails, tokens or credentials in any file
   (`python3 Scripts/check-release-hygiene.py`). Use `<SwiftFormal checkout>` or relative paths in docs.
 - Commits: one logical change each, safety net green at each, subject like `fix(SFSAT): …` or `docs: …`

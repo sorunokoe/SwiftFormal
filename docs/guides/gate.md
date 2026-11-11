@@ -2,8 +2,8 @@
 
 ## Build checks, tests walk: `swiftformal check --gate`
 
-On build, logic checks every promise you wrote. The tests (walks) check the rest. CI runs the same two steps and gets
-the same result.
+On build, Scan ("the logic") checks every `@Verify` promise you wrote. The tests (walks) check the rest. CI runs the
+same two steps and gets the same result.
 
 ```swift
 @Verify(over: .product(.int(0 ... 100), .int(0 ... 100)))
@@ -29,7 +29,7 @@ swiftformal: gate: Shop: 2 of 4 promises proved by logic, 1 broken, 1 left to th
    script cannot.
 
 ```sh
-/path/to/SwiftFormal/.build/out/Products/Release/swiftformal check --gate --package "$SRCROOT/Packages"
+"<SwiftFormal checkout>/.build/release/swiftformal" check --gate --package "$SRCROOT/Packages"
 ```
 
 - XcodeGen: the same script under `preBuildScripts` with `basedOnDependencyAnalysis: false`.
@@ -73,10 +73,10 @@ swiftformal check --gate --build-log build.log --target App
   marked `@Verify`). In every target of the package (`Sources/<Target>/`), or only the `--target` ones. Functions
   without a promise are not reported.
 - **Not read:** a hand-written `f_requires` / `f_ensures` and a `// sf:verify` comment. Each is an **error** that says
-  to write the contract in place with `@Verify`, `#requires` and `#ensures` (`@Verify` alone asks for a proof that
+  to write the promise in place with `@Verify`, `#requires` and `#ensures` (`@Verify` alone asks for a proof that
   the function cannot trap).
 - **Error:** a broken promise or a trap, for a concrete input.
-- **Warning:** a `@Verify` function or contract that logic cannot read yet (a class, a closure it cannot see into,
+- **Warning:** a `@Verify` function or promise that logic cannot read yet (a class, a closure it cannot see into,
   undecided within the budget). Only a test can check it. For a `@Verify` function the warning names its walk
   (`#expect(verify_boxed().isProved)`). A computed property, a `mutating` method or a function with nothing to walk
   has no walk: the test must call it. The build cannot see whether such a test exists. `--strict` makes every warning
@@ -99,7 +99,7 @@ swiftformal check --gate --build-log build.log --target App
   header and macro its arguments name, every file the compiler read (also a C header included as `"../limits.h"`),
   the manifests, the compiler, SDK, tool and flags. An edit saved during the check is never stamped
   ([what a stamp covers](scan.md#the-proof-cache)).
-- A checked target reuses answers for the same code, contracts, callees, compiler and flags from the proof cache in
+- A checked target reuses answers for the same code, promises, callees, compiler and flags from the proof cache in
   `<package>/.build/swiftformal/proofs`.
 - `--force` checks every target. `--no-proof-cache` also proves everything again.
 
@@ -111,10 +111,10 @@ swiftformal check --gate --build-log build.log --target App
   decided in 0.02 s; a 16-bit one with two multiplications was still undecided after 100 000 conflicts (5.1 s); the
   32-bit version was still undecided after 300 000 conflicts (27 s, release build). Narrow the types or move the
   check into a test.
-- **Fail closed:** a gated function that may trap, breaks its contract, is undecided, is outside the supported subset,
+- **Fail closed:** a gated function that may trap, breaks its promise, is undecided, is outside the supported subset,
   was not found, or sits in a file that does not compile is never a silent pass. Remove `@Verify` if the function is
   out of scope.
 
 There is no build plugin: a build-tool plugin cannot load a macro built by the package (`@Verify` itself), so on a
-target that uses `@Verify` it could only fail. `swiftformal doctor`, run in a package, names a target that still
-applies the old `SwiftFormalGate` plugin and says to run `swiftformal check --gate` instead.
+target that uses `@Verify` it could only fail. If a target still applies the pre-0.1.0 gate plugin,
+`swiftformal doctor` names it and says to run `swiftformal check --gate` instead.

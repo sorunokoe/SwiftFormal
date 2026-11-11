@@ -5,7 +5,7 @@ only a correctness bug.
 
 ## What to report privately
 
-- A false `proved` (Walk or Prove), a false `safe` or `contractHolds` (Scan), or a `proved` that rests on a proof the
+- A false `proved` (Walk or symbolic proofs), a false `safe` or `contractHolds` (Scan), or a `proved` that rests on a proof the
   checker should have rejected.
 - A bad proof that `LRATChecker` or `RUPChecker` accepts.
 - A `ProofCache` entry accepted as `proved` although `Trust.recheck` should reject it. (Known limit: anyone who can

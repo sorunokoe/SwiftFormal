@@ -1,8 +1,9 @@
 # Scan: can this function trap? (`swiftformal check`)
 
-`swiftformal check` compiles your Swift with the real `swiftc` and reads the SIL. For each function it can read, it
-either **proves it cannot trap for any input** or prints **one concrete input that traps** (file:line:col and a replay
-call). It also proves `@Verify` contracts for every input. No spec is needed.
+Scan ("the logic") is the first step of `swiftformal check`. It compiles your Swift with the real `swiftc` and reads
+the SIL. For each function it can read, it either **proves it cannot trap for any input** or prints **one concrete
+input that traps** (file:line:col and a replay call). It also proves each `@Verify` promise (`#requires` and
+`#ensures`) for every input. A second checker (`SFCheck`) confirms each proof. No promise is needed to find traps.
 
 ## Usage
 
@@ -16,7 +17,8 @@ swiftformal check --scan .:MyTarget --symbol 'Score.clamp(_:)'                # 
 swiftformal check --build-log <log or DerivedData> --target MyApp             # an app target a build compiled
 ```
 
-**Exit codes:** 0 ok, 1 a contract failed (or `--strict` and something may trap), 2 usage or compiler error.
+**Exit codes:** 0 ok, 1 a promise is broken or a linked walk did not report (with `--strict`, also something may
+trap), 2 usage or build error.
 
 | Option | Effect |
 |---|---|
@@ -26,22 +28,22 @@ swiftformal check --build-log <log or DerivedData> --target MyApp             # 
 | `--budget N` | Solver conflict budget per function. |
 | `--strict` | "May trap" also exits 1. |
 | `--no-opaque-calls` | Refuse calls with no body instead of [assuming them](#types-from-binary-frameworks). |
-| `--mutate` | [Is the contract strong enough?](#is-my-contract-strong-enough---mutate) |
+| `--mutate` | [Is the promise strong enough?](#is-my-promise-strong-enough---mutate) |
 | `--xcode`, `--format sarif\|github`, `--json` | [Editor](#in-your-editor-no-language-server), [CI](#in-ci-sarif-and-github-annotations), [JSON](#the-json-report---json-schema-version-1) output. |
-| `--emit-tests <dir>` | [Counterexamples as tests](#replaying-counterexamples-as-tests---emit-tests---confirm). |
+| `--emit-tests <dir>` | [Counterexamples as tests](#replaying-counterexamples-as-tests---emit-tests). |
 | `--proof-cache <dir>`, `--no-proof-cache` | [Proof cache](#the-proof-cache) location, or none. |
 | `--jobs N` | [Packages scanned at a time](#an-app-made-of-many-packages). |
 | `--gate` | The build check of `@Verify` functions ([Gate](gate.md)). |
 
 `swiftformal check --help` lists the rest (walks, `--show-unchecked`, `--show-proved`).
 
-**`sfverify`.** The scanner behind `check` is a maintainers' tool, built from a checkout with
-`swift build --product sfverify`, not a product. Some options below exist only there: `-O`, `--config`, `--unwind`,
-`--modular`, `--paranoid`, `--show-unsupported`, `--cross-check`, `--confirm`, `--stats`, and scanning loose files.
+**Maintainer-only options.** A few options named below (`--modular`, `--unwind`, `--config`, `-O`, `--stats`,
+`--cross-check`, `--paranoid`, `--confirm`) belong to `sfverify`, the internal scanner the maintainers use for
+benchmarks and the engine's tests. It is not a product, and `swiftformal check` has none of them.
 
 **`--at` and `--symbol`.** `--at <file>:<line>` picks the innermost function whose body, declaration, attribute or
 doc comment holds that line (a closure belongs to its function). `--symbol` takes the name as the report prints it, or
-`Type.member` with argument labels. Exactly one function must fit: several are listed, a contract function `@Verify`
+`Type.member` with argument labels. Exactly one function must fit: several are listed, a promise function `@Verify`
 wrote (`f_requires`) says to select `f`, and no match exits 2. The module is still compiled whole; only the other
 proofs are skipped.
 
@@ -77,7 +79,7 @@ swiftformal check --scan App/Packages:Settings --scan App/Packages:Profile
 compilers are not proved at the same time. Output and exit code are the same as with `--jobs 1`. Without `xcrun`
 (Linux), one package at a time. Trade-off: an umbrella package builds dependencies once but scans serially.
 
-## Contracts
+## Promises (`@Verify` contracts)
 
 ```swift
 import SwiftFormal
@@ -90,37 +92,31 @@ func clamp(_ x: Int8, _ lo: Int8, _ hi: Int8) -> Int8 {
 }
 ```
 
-`@Verify` writes the contract as two functions next to `clamp` (`clamp_requires`, `clamp_ensures`), in every build
-configuration, and Scan proves those on the compiled function for every input: `contractHolds`, or `contract FAILS`
+`@Verify` writes the promise as two functions next to `clamp` (`clamp_requires`, `clamp_ensures`), in every build
+configuration, and Scan proves those on the compiled function for every input: `contractHolds`, or `contractFails`
 with one input. Arguments: the parameters, then the result (if any), then `self` (for a method).
 
 - **Only `@Verify` counts.** Scan knows its functions by where the compiler puts them (the `@Verify` expansion). A
   function of the same name written by hand is not read: it is listed under `ignoredContracts`, the verdict is about
-  traps only, and `check --gate` fails on it. Write the contract in place with `@Verify`, `#requires` and `#ensures`.
+  traps only, and `check --gate` fails on it. Write the promise in place with `@Verify`, `#requires` and `#ensures`.
 - The body checks `@Verify` adds exist only where `DEBUG` is defined (unless `checks: .always`); the verdict does not
-  depend on them. A broken contract shows as `ensures failed: …` with them, `ensures is false: …_ensures …` without.
+  depend on them. A broken promise shows as `ensures failed: …` with them, `ensures is false: …_ensures …` without.
 - **`mutating` methods:** `#ensures { old in altitudeText == old.altitudeText }` (`self` is after the call, `old`
   before; `#requires` sees `self` before). No walk exists for these; Scan proves them for every `self`.
 - **Other `inout` parameters:** no `ensures` (it would see the old value). Return the new value instead.
 - **`Void` functions** (not `mutating`): no `ensures`.
 - **Computed properties:** `@Verify var isLoading: Bool { #ensures { $0 == (state == .loading) }; … }` pairs with the
   getter. On a property with a setter, `@Verify` goes on the `get` and Scan sees only the checks in the getter (in a
-  `DEBUG` build), so the contract is not proved: move the code into a read-only property or a function.
+  `DEBUG` build), so the promise is not proved: move the code into a read-only property or a function.
 - **Rules called through a protocol extension:** with `extension Rule { func execute() -> Output { body } }`, a call
-  `LevelScore(input: level).execute()` is read as `LevelScore`'s `body`, so a contract on a caller covers the rule's
+  `LevelScore(input: level).execute()` is read as `LevelScore`'s `body`, so a promise on a caller covers the rule's
   code. A generic conforming type (`Box<T>: Rule`) stays `unsupported`.
 
-### Contracts at call sites (`--modular`)
+### Deep call chains
 
 Scan inlines calls, at most eight levels deep. Deeper is `unsupported` ("deep call chain"); a large call tree can be
-`undecided` (budget). With `sfverify --modular`, functions are verified as usual, then proved again with each callee
-proved in the same run replaced by its contract: the call must meet its `#requires` (or it is a trap), and the result
-is any value meeting its `#ensures`.
-
-- Only a proof is kept (`used the contract of g(_:)`, `usesContracts` in the JSON); any other verdict stays the
-  inlined one. A weak contract can never make a function wrongly `safe`.
-- A callee's contract is used only if it was proved without loops, writes nothing through `inout`, and cannot throw.
-- The second pass does not run the array bound, so a `bounded` function stays `bounded`.
+`undecided` (budget). The maintainers' `sfverify --modular` proves such functions again with each proved callee
+replaced by its promise; `swiftformal check` does not.
 
 ## What Scan reads
 
@@ -145,7 +141,7 @@ is any value meeting its `#ensures`.
 `for-in` over other sequences, `@Observable` and `ObservableObject` classes.
 
 Coverage: kernels in [`archive/research/2026-11-05-triz-and-swift-semantics.md`](../../archive/research/2026-11-05-triz-and-swift-semantics.md)
-§6g. On a production SwiftUI/TCA app, about 4 in 10 functions were read, almost all trivial without a contract.
+§6g. On a real iOS app (SwiftUI and TCA), about 4 in 10 functions were read, almost all trivial without a promise.
 
 ### Text
 
@@ -219,7 +215,7 @@ subnormals, signed zero, overflow to infinity (`x / 0` is an infinity, not a tra
 
 1. Prove with nothing assumed at the loop header. `safe` then holds for every run that ends; termination is not proved.
 2. Else, for one loop and no `ensures`: 2-induction (proves `repeat … while` and `-O` loops).
-3. Else, unroll up to 8 header visits (`sfverify --unwind N`) to find a trap: a trap found is real (`may trap`); none
+3. Else, unroll up to 8 header visits to find a trap: a trap found is real (`may trap`); none
    found is `undecided`.
 
 ### Classes
@@ -260,7 +256,6 @@ Assumptions: [TRUST.md](../TRUST.md).
 A release build removes `assert` and the side effects of its condition, so a function can be safe in one build and trap
 in the other. By default a `-Onone` scan also compiles with `-assert-config Release` and re-checks functions whose code
 differs: `safe` means safe in both, and a release-only trap says `in a release build (-assert-config Release): …`.
-`sfverify --config debug|release` checks one build; `sfverify -O` checks release only.
 
 ## The proof cache
 
@@ -271,10 +266,10 @@ Compiling and reading still run; only solving is skipped.
   `--proof-cache <dir>` moves it; `--no-proof-cache` disables it. A `--build-log` scan has no cache unless given
   `--proof-cache`. (`--cache-dir` is unrelated: it keeps build commands.) Runs may share a cache: entries are written to
   a temporary file and renamed.
-- **Kept:** `safe` or `contract holds` whose LRAT proof `SFCheck` accepted, and replayed counterexamples (replayed again
-  before use, dropped if they no longer fail). **Never kept:** `undecided`, `unsupported`, loop proofs, `--modular`
-  retries, `--gate` runs.
-- **A hit still runs** contract-shape checks, the exclusivity check, the debug/release merge, `--llvm-check` and `--paranoid`.
+- **Kept:** `safe` or `contractHolds` whose LRAT proof `SFCheck` accepted, and replayed counterexamples (replayed again
+  before use, dropped if they no longer fail). **Never kept:** `undecided`, `unsupported`, loop proofs.
+  `check --gate` reads and writes the same cache.
+- **A hit still runs** promise-shape checks, the exclusivity check and the debug/release merge.
 - **The key** covers the function and all it can reach (callees, contracts, witnesses), the module's types, tables,
   globals and flags, the budget class, the build (compiler, SDK, target, arguments, optimization, assert config,
   linked modules), and the tool (the Mach-O UUIDs of its loaded images; no UUID or no Mach-O means no cache). Debug and
@@ -293,15 +288,14 @@ Compiling and reading still run; only solving is skipped.
   seen in the dependency list changed at least a second before the check, every module linked, and the target passed.
   Same trust rules as entries. `--force` checks every target; `--no-proof-cache` ignores stamps. What is not covered:
   [TRUST.md](../TRUST.md).
-- **Report:** `N from the proof cache` per module; `sfverify --stats` prints hits, misses, stored, rejected, unkeyed,
-  I/O errors and key time; the JSON has `proofCache` and `fromCache: true`.
+- **Report:** `N from the proof cache` per module; the JSON has `proofCache` and `fromCache: true`.
 
-## Is my contract strong enough? (`--mutate`)
+## Is my promise strong enough? (`--mutate`)
 
-A contract that says too little still holds when the code is broken. `--mutate` re-checks each holding contract on
+A promise that says too little still holds when the code is broken. `--mutate` re-checks each holding promise on
 small SIL edits of the function: skip a call that changes `self`, drop a write to `self`, return another value, negate a
 branch, swap two neighbouring `switch` cases, change an operator (`<` to `<=`, `+` to `-`) or a constant by one. An edit
-that the contract accepts but that changes the result on some input meeting `requires` makes the contract **weak**:
+that the promise accepts but that changes the result on some input meeting `requires` makes it **weak**:
 
 ```
 ✓ contract holds ValuesState.discardEdit()  (ValuesState.swift:92)
@@ -310,12 +304,12 @@ that the contract accepts but that changes the result on some input meeting `req
             (the two may differ only in what String.init(_:) returns, which logic does not model)
 ```
 
-The input shows where the contract is silent. Make it say more, or accept a partial contract.
+The input shows where the promise is silent. Make it say more, or accept a partial promise.
 
 - An edit proved equivalent to the function is not reported. If the difference depends on unmodelled results (here
   `String(_:)`), it is listed as `may differ` with the reason.
 - No effect on verdicts, exit code, or output without the flag.
-- Limits: 16 edits per function, 100,000 conflicts per check, 30 s per function. Only contracts with an `ensures`, on
+- Limits: 16 edits per function, 100,000 conflicts per check, 30 s per function. Only promises with an `ensures`, on
   functions without loops, in the first build configuration (including the `@Verify` closure, without positions). The
   checks `@Verify` writes (`#requires`, the `#ensures` closure) are not edited.
 - JSON: `weakContract` per function, `summary.weakContracts`.
@@ -363,7 +357,7 @@ swiftformal check --build-log /tmp/myapp-dd --target MyApp --scratch-path /tmp/m
 
 - `ARCHS=arm64` if the framework has only an arm64 Swift module (one command per target).
 - Every Swift module must compile; "Linking failed" is fine.
-- `--scratch-path` links the app's other targets and packages (22 modules on a production app); failures are in `warnings`.
+- `--scratch-path` links the app's other targets and packages (22 modules on a real iOS app); failures are in `warnings`.
 - `--cache-dir` keeps the saved command out of DerivedData.
 - Kotlin types are [opaque references](../KNOWN-ISSUES.md#13-objective-c-objects-every-call-returns-its-own-value-by-design-for-now);
   creating, casting and printing them stay `unsupported`. Kotlin enums and sealed classes are read through SKIE
@@ -399,7 +393,7 @@ func itemTitle(_ item: Item) -> String {
 
 A proof holds for every value the assumed calls may return; it does not cover a call that traps or never returns
 (SKIE's `fromObjectiveC` stops the process on `nil`). `--no-opaque-calls` (`check`, also with `--gate` and
-`--build-log`, and `sfverify`) refuses every call with no body: such a function is `unsupported`, with the call named.
+`--build-log`) refuses every call with no body: such a function is `unsupported`, with the call named.
 Two calls are never assumed to give the same value.
 
 ## Localization catalogues: `swiftformal strings`
@@ -428,7 +422,7 @@ file name) and reports, per key and language:
 **`swiftformal check --xcode`** (or `--format xcode`) prints logic and walk verdicts as compiler lines tagged
 `[swiftformal]`, with `note:` lines for the input, the replay, the walk and the call chain (`diagnostics()` in
 [`Sources/SFVerifyKit/CheckDiagnostics.swift`](../../Sources/SFVerifyKit/CheckDiagnostics.swift)). An `error` is
-exactly what fails the run (broken contract, failing walk, silent walk; a trap only with `--strict`, else a `warning`):
+exactly what fails the run (broken promise, failing walk, silent walk; a trap only with `--strict`, else a `warning`):
 
 ```
 /…/Score.swift:5:9: error: [swiftformal] clamp(_:_:_:) ensures is false when x = 1, lo = 2, hi = 0 — concrete counterexample (logic, every input)
@@ -449,17 +443,6 @@ Its `--json` adds per module `package`, `configurations`, `compiler`, `pinned`, 
   (depends on a call such as `String.count`; use a walk or a test).
 - A finding with no location starts with the module name; matchers miss it.
 - Paths are as given to the compiler (absolute with `--scan`).
-
-`sfverify --xcode` prints the per-module form (`diagnostics()` in
-[`Sources/SFVerifyKit/Report.swift`](../../Sources/SFVerifyKit/Report.swift)). With `--show-unsupported` it adds notes
-at the unread construct, `called from here` at each call leading to it, and `fix: …`:
-
-```
-· unsupported    viaCallee(_:)  (nu.swift:4) — generics
-      at nu.swift:2:5: generic call to numericCast<A, B>(_:) with <Int16, Int32>
-      called from nu.swift:5:5
-      fix: Scan reads concrete code only; call a non-generic version (for `numericCast(x)` write the conversion, such as `Int32(x)`)
-```
 
 **VS Code.** `$swiftc` comes with the Swift extension (`swiftlang.swift-vscode`). In `.vscode/tasks.json`:
 
@@ -500,7 +483,7 @@ the build like a compiler error). For every function, the phase can run (not tri
 
 It needs a SwiftPM target and `ENABLE_USER_SCRIPT_SANDBOXING = NO`; its `swift build` writes to `<package dir>/.build`.
 
-## Replaying counterexamples as tests (`--emit-tests`, `--confirm`)
+## Replaying counterexamples as tests (`--emit-tests`)
 
 `--emit-tests <dir>` writes `<dir>/<Module>ScanPlaybackTests.swift`, one Swift Testing test per counterexample with a
 replay (a free function, or a method, getter, static method or initializer of a struct or enum):
@@ -520,18 +503,14 @@ replay (a free function, or a method, getter, static method or initializer of a 
 - A stored property a replay cannot write (array, `UUID`, no literal) keeps its default, if any; the test is written
   only if a proof shows the trap happens whatever it holds. Else: `no replay (the trap may depend on stored properties a
   test cannot set (…))`.
-- No test for: `private` types or functions, non-memberwise initializers, generic types, setters, broken contracts of
+- No test for: `private` types or functions, non-memberwise initializers, generic types, setters, broken promises of
   methods, inputs without a literal, `inout`, `throws`/`async`, undefined behaviour in a primitive (listed at the end of
   the file; `noReplay` in `--json`).
 - Put the file in a test target (`@testable import <Module>`). Release-only counterexamples are wrapped in `#if !DEBUG`
   (run `swift test -c release`). Exit tests need Swift 6.3+ on macOS or Linux; elsewhere the file is compiled out.
 
-`sfverify --confirm` (opt-in: **it builds and runs your code**) builds those tests in a scratch package (`swift build
---build-tests`, same `-D`, features and language mode) and runs each debug test alone. A reproduced counterexample gets
-`"confirmed": true`. One that does not reproduce is a model/compiler disagreement: `internalError` (exit 1),
-`confirmed: false`. If the scratch build cannot match the scan, that is only a warning. Release-only ones are not run.
-A module that imports other package modules or dependencies (TCA) cannot build alone: `--confirm` warns and marks
-nothing; run the emitted file in your own test target. About 14 s for three tests.
+Run the emitted file in your own test target. (The maintainers' `sfverify --confirm` builds and runs these tests
+itself and sets `confirmed` in the JSON; `swiftformal check` does not.)
 
 ## In CI: SARIF and GitHub annotations
 
@@ -581,22 +560,22 @@ Each entry of `functions`:
 | `status` | `safe`, `mayTrap`, `contractHolds`, `contractFails`, `undecided`, `unsupported`, `internalError`. |
 | `category`, `detail`, `hint` | Why `unsupported` or `undecided` (`budget` or `unmodelled results`), and what to change. |
 | `at`, `calledFrom`, `typePath` | For `unsupported`: where the unread construct is, the calls leading there (innermost first), or the path to an unreadable type (`self.tabs.style: Color`). |
-| `counterexample` | `inputs`, `failure`, optional `result`, `at`, `replay`, `ensuresCall`, `confirmed` (`--confirm`). |
+| `counterexample` | `inputs`, `failure`, optional `result`, `at`, `replay`, `ensuresCall`, `confirmed` (maintainers' `--confirm`). |
 | `moreTraps` | Other trap places, same keys as `counterexample`. |
-| `hasContract` | `@Verify` wrote `f_requires` or `f_ensures`. If `unsupported` or `undecided`, it was not checked. |
-| `ignoredContracts` | Hand-written look-alike contracts (`f_requires`, `f_ensures`) that were not read. |
+| `hasContract` | The function has a `@Verify` promise (`@Verify` wrote `f_requires` or `f_ensures`). If `unsupported` or `undecided`, it was not checked. |
+| `ignoredContracts` | Hand-written look-alike promise functions (`f_requires`, `f_ensures`) that were not read. |
 | `origin` | `macro` or `build` for generated code (not counted in `summary`). |
-| `crossCheck`, `crossCheckReason` | `--cross-check llvm`: `agrees`, `disagrees`, `unread` (with reason) or `undecided` (20,000 conflicts). With `llvm-strict`, anything but `agrees` makes the verdict `undecided`. |
-| `usesContracts` | `--modular`: callees whose contracts were used. |
+| `crossCheck`, `crossCheckReason` | Maintainers' `--cross-check llvm` only: `agrees`, `disagrees`, `unread` (with reason) or `undecided` (20,000 conflicts). With `llvm-strict`, anything but `agrees` makes the verdict `undecided`. |
+| `usesContracts` | Maintainers' `--modular` only: callees whose promises were used. |
 | `assumptions` | Calls with no body the verdict takes on trust, callees' included ([binary frameworks](#types-from-binary-frameworks)). |
 | `weakContract` | `--mutate`: `mutantsTried`, `survivors` (`mutation`, `kind`, `at`, `differsOn`, `mayBeEquivalent`, `reason`). |
 | `seconds` | Wall time; functions run in parallel, so the sum can exceed `verifySeconds`. |
-| `solverConflicts`, `cnfVariables`, `cnfClauses` | `--stats` only: exact, deterministic proof cost (compare across machines, not solver versions). |
+| `solverConflicts`, `cnfVariables`, `cnfClauses` | Maintainers' `--stats` only: exact, deterministic proof cost (compare across machines, not solver versions). |
 
 **Plumbing.** `summary.plumbing` counts `unsupported` functions that wire the app rather than compute: they stop at a
 property wrapper or injection type (`Injected<…>`, `Dependency<…>`, `Environment<…>`, `State<…>`, `Binding<…>`,
 `Store<…>`, Factory's `Container`), are a view or reducer `body`, or a TCA `@ObservableState` setter. It is only a count;
-they stay `unsupported` (579 of 3,334 on a production app's main target).
+they stay `unsupported` (579 of 3,334 on a real iOS app's main target).
 
 `Scripts/metrics.py` records counts for [`Examples/Metrics`](../../Examples/Metrics) in `Scripts/baseline/metrics.json`
 and fails on a verdict change or growth over 10 % ([PERFORMANCE](../PERFORMANCE.md)).

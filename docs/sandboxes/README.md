@@ -17,7 +17,7 @@ A sandbox is one small piece of SwiftFormal that builds, tests and runs on its o
 | [SFSAT](SFSAT.md) | The SAT solver | `SFSATTests` (slow) | macOS, iOS | slow tests |
 | [SFCheck](SFCheck.md) | Independent proof checker | `SFSATTests` (slow) | macOS, iOS | shares its tests with SFSAT |
 | [SFBV](SFBV.md) | Bit-vector encoder | `SFBVTests` (very slow) | macOS, iOS | 11+ minutes in debug |
-| [SFProve](SFProve.md) | Prove: whole integer ranges | `SFProveTests` (slow) | macOS, iOS | both test consumers are slow |
+| [SFProve](SFProve.md) | Symbolic proofs (preview): whole integer ranges | `SFProveTests` (slow) | macOS, iOS | both test consumers are slow |
 | [SFSemantics](SFSemantics.md) | What Swift's integer operations mean (`S0`) | `SFSemanticsTests` (about 50 s) | macOS, iOS | consumer tests are slow |
 | [SFSIL](SFSIL.md) | Reads compiler SIL, proof cache, compiler pin | `SFSILTests` (slow) | macOS | largest sandbox; needs `Process` |
 | [SFLLVM](SFLLVM.md) | Reads LLVM IR (second reader) | `SFOracleTests` (slow) | macOS | no production consumer; ADR 0008 |

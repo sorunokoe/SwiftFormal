@@ -17,3 +17,9 @@ The package grew three ways to check a function, built at different times: runni
 - A reader learns one analogy and can place any feature in it.
 - Later phases that rename types or add an evidence line to reports have a fixed target to aim at.
 - The analogy is a teaching aid, not an API. If it ever misleads, the glossary and [TRUST.md](../TRUST.md) win.
+- Since 0.1.0 the names point at today's API, and one name changed:
+  - **Scan** (`swiftformal check`, "the logic" in the README) runs first; a **Walk** runs where Scan cannot read the
+    code (`Prove(it:over:)` in tests, `verify_<name>()` written by `@Verify`).
+  - The `SFProve` engine is called **symbolic proofs**, not "Prove": `Prove(...)` became the one way to walk, and one
+    word must not mean two things.
+  - The [glossary](../GLOSSARY.md) holds the current words.
