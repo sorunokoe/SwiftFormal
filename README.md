@@ -1,4 +1,9 @@
 # SwiftFormal
+
+<p align="center">
+  <img src=".github/logo.svg" alt="many inputs go through a function, and every result is checked" width="280">
+</p>
+
 A formal verification library for Swift. It checks that your code keeps its promises for every input, not only the
 few inputs your tests try.
 
