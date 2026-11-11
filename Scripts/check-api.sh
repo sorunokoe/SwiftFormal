@@ -5,8 +5,10 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 base="${1:-$(git describe --tags --abbrev=0 --match '[0-9]*' 2>/dev/null)}"
 if [ -z "$base" ]; then echo "api check: no release tag yet, nothing to compare with"; exit 0; fi
+# SFProve (a preview) is not compared: SwiftPM builds no baseline for a plain
+# target here, so the digester fails. Check SFProve changes by hand in review.
 out=$(swift package diagnose-api-breaking-changes "$base" \
-  --products SwiftFormal SwiftFormalTesting --targets SFProve 2>&1)
+  --products SwiftFormal SwiftFormalTesting 2>&1)
 if ! printf '%s\n' "$out" | grep -q "breaking change"; then
   printf '%s\n' "$out" | tail -20
   echo "api check could not run"; exit 1
