@@ -4,6 +4,13 @@ All notable changes, in the [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ## [Unreleased]
 
+### Added
+
+- `swiftformal check --gate --tests <dir>`: the gate links walks to the functions logic cannot prove. With
+  `--strict`, a promise that is neither proved nor linked to a walk is an error.
+- `swiftformal check --gate --build-log` takes Xcode's build plan (`Build/Intermediates.noindex/XCBuildData`), which
+  a Run Script phase after Compile Sources can read for its own build: an app target can be gated from the build.
+
 ### Changed
 
 - Docs use one set of words everywhere ([glossary](docs/GLOSSARY.md)): Scan ("the logic") first, then Walk. The
@@ -12,6 +19,8 @@ All notable changes, in the [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ### Fixed
 
+- A CoreGraphics PDF warning printed into the compile command no longer ends up in the saved command (the gate
+  failed with "could not build … COMPILER FAILED" until `.build/swiftformal/args` was deleted).
 - `Scripts/check-api.sh` works against the `0.1.0` tag. It compares `SwiftFormal` and `SwiftFormalTesting` only;
   `SFProve` (a preview) is not compared.
 

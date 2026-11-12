@@ -5,8 +5,8 @@ let gateUsage = """
     swiftformal check --gate — the build-time check: prove every promise with logic, before the tests run.
 
     USAGE
-      swiftformal check --gate [--package <dir>] [--target <name> …] [--strict] [--budget <n>] [--force] [--no-proof-cache]
-                               [--no-opaque-calls]
+      swiftformal check --gate [--package <dir>] [--target <name> …] [--strict] [--tests <dir> …] [--budget <n>] [--force]
+                               [--no-proof-cache] [--no-opaque-calls]
       swiftformal check --gate --build-log <file> --target <name> [--package <dir>] [--scratch-path <dir>] [--strict]
                                [--no-opaque-calls]
 
@@ -23,7 +23,8 @@ let gateUsage = """
     OUTPUT  file:line:col diagnostics, which Xcode shows in the editor:
       error    a promise is broken, or the function may trap, for a concrete input (shown).
       warning  logic could not prove a `@Verify` function (unsupported, undecided). Only a test can check it now: the
-               warning names the walk to call. With --strict, an error.
+               warning names the walk to call. With --strict, an error. With --tests, an error unless a `Prove`
+               walk in those test sources is linked to the function (then a note names the walk).
 
     Every target is built on each run. One that passed before is not checked again while nothing the check read has
     changed: its files and build arguments with every module, header and macro they name, every file the compiler
@@ -41,6 +42,9 @@ let gateUsage = """
       --cache-dir <dir>     With --build-log: where the saved command is kept (default: the scratch path).
       --strict              Every promise must be proved by logic: warnings become errors. (Without --gate, --strict
                             makes a function that may trap fail the run; with it, the gate's warnings.)
+      --tests <dir>         Test sources (a folder, searched for `Prove` walks); repeatable. A `@Verify` function that logic
+                            cannot prove must have a walk linked to it, as `swiftformal check` links them, or the gate
+                            fails. The gate does not run the walks: that the linked test runs and passes is for the tests.
       --budget <n>          Solver conflict budget per function (default 300000).
       --proof-cache <dir>   Keep checked answers in <dir> instead (trusted only when it and every directory above
                             it are writable by you or root alone).
@@ -48,7 +52,7 @@ let gateUsage = """
       --force               Check even the targets unchanged since they last passed.
       --no-opaque-calls     Refuse every call with no body (binary modules, Objective-C methods, `==` of Objective-C
                             objects) instead of assuming it returns any value without trapping.
-      The other options of `swiftformal check` (--scan, --tests, --at, --json, …) do not apply with --gate.
+      The other options of `swiftformal check` (--scan, --at, --json, …) do not apply with --gate.
 
     XCODE  Add a Run Script build phase (with "User Script Sandboxing" off for it):
       /path/to/swiftformal check --gate --package "$SRCROOT/Packages"
@@ -78,6 +82,7 @@ private struct GateRequest {
     var budget = 300_000
     var proofCache: String?
     var noProofCache = false
+    var tests: [String] = []
     var force = false
     var opaqueCalls = true
     var buildLog: String?
@@ -116,7 +121,7 @@ private struct GateRequest {
 
     /// An option with a value; any other option of `check` is a usage error here, not silently ignored.
     private mutating func set(_ flag: String, _ value: @autoclosure () -> String) {
-        let known = ["--package", "--target", "--budget", "--build-log", "--scratch-path", "--cache-dir", "--proof-cache"]
+        let known = ["--package", "--target", "--budget", "--build-log", "--scratch-path", "--cache-dir", "--proof-cache", "--tests"]
         guard known.contains(flag) else {
             fail("\(flag) does not apply with --gate (the gate proves @Verify promises and runs no walks)\n\n\(gateUsage)")
         }
@@ -127,6 +132,7 @@ private struct GateRequest {
         case "--budget":
             guard let n = Int(text), n > 0 else { fail("--budget needs a number") }
             budget = n
+        case "--tests": tests.append(URL(fileURLWithPath: text).standardizedFileURL.path)
         case "--build-log": buildLog = text
         case "--scratch-path": scratchPath = text
         case "--cache-dir": cacheDirectory = text
@@ -147,7 +153,21 @@ private struct GateRequest {
     }
 
     /// The flags that change what a check prints.
-    var settings: String { "strict=\(strict) budget=\(budget)\(opaqueCalls ? "" : " no-opaque-calls")" }
+    var settings: String {
+        "strict=\(strict) budget=\(budget)\(opaqueCalls ? "" : " no-opaque-calls")"
+            + (tests.isEmpty ? "" : " tests=\(BuildCheck.fingerprint(of: testFiles, salt: tests.joined(separator: ",")))")
+    }
+
+    /// The Swift files under the --tests folders.
+    var testFiles: [String] {
+        tests.flatMap { folder -> [String] in
+            let names = FileManager.default.enumerator(atPath: folder)?.compactMap { $0 as? String } ?? []
+            return names.filter { $0.hasSuffix(".swift") && !$0.contains(".build/") }.map { folder + "/" + $0 }
+        }.sorted()
+    }
+
+    /// The walks of the --tests sources, or `nil` without --tests.
+    var walks: [WalkCheck]? { tests.isEmpty ? nil : Check.findWalks(in: testFiles) }
 
     /// The targets to check: the named ones, or every target under the package with a promise.
     var found: [BuildCheck.Target] {
@@ -288,7 +308,7 @@ private func check(
     do { report = try run(options) } catch { return couldNotBuild(name, error) }
     let notes = (report.warnings ?? []).map { "gate: \(name): warning: \($0)" }
     for line in notes { note(line) }
-    var result = BuildCheck.evaluate(report, promises: promises.promises, strict: request.strict)
+    var result = BuildCheck.evaluate(report, promises: promises.promises, strict: request.strict, walks: request.walks)
     result.diagnostics = promises.problems + result.diagnostics
     for line in result.diagnostics { print(line) }
     fflush(stdout)

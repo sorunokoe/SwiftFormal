@@ -192,12 +192,12 @@ swiftformal check --jobs
   stderr '--jobs needs a value' sha=1b3d72e59b21
 swiftformal check --gate --help
   exit 0
-  stdout 'swiftformal check --gate — the build-time check: prove every promise with logic, before the tests ru' sha=637a70f79f2c
+  stdout 'swiftformal check --gate — the build-time check: prove every promise with logic, before the tests ru' sha=5a98d8fd5f81
   stderr '' sha=e3b0c44298fc
 swiftformal check --gate --scan Examples/does-not-exist:X
   exit 2
   stdout '' sha=e3b0c44298fc
-  stderr '--scan does not apply with --gate (the gate proves @Verify promises and runs no walks)' sha=f3a34669dc3b
+  stderr '--scan does not apply with --gate (the gate proves @Verify promises and runs no walks)' sha=6e50f393c74e
 swiftformal check --gate --build-log build.log
   exit 2
   stdout '' sha=e3b0c44298fc

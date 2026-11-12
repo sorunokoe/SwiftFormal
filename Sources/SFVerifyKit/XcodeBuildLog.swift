@@ -6,6 +6,8 @@ extension SwiftPMBuild {
     /// The text of a build log for `--build-log`:
     /// - a plain log (`swift build -v` or `xcodebuild` output) as it is;
     /// - an `.xcactivitylog` (Xcode's own log: gzip-compressed SLF), decoded to its strings;
+    /// - the plan of an Xcode build (`…/Build/Intermediates.noindex/XCBuildData`, or one `<id>.xcbuilddata` in it): the
+    ///   newest plan that holds a command for `module`; it also works inside that build, from a Run Script phase;
     /// - a folder (DerivedData, or its `Logs/Build`): the newest activity log that compiled `module`, or the newest
     ///   one when none did (its build compiled nothing; then the saved command decides).
     public static func readBuildLog(_ path: String, module: String) throws -> String {
@@ -14,6 +16,13 @@ extension SwiftPMBuild {
             throw ScanUsageError("no build log at \(path)")
         }
         if isDirectory.boolValue {
+            let plans = xcodeBuildData(in: path)
+            if !plans.isEmpty {
+                for plan in plans {
+                    if let text = xcodeBuildDataLog(plan), compileInvocation(in: text, module: module) != nil { return text }
+                }
+                throw ScanUsageError("no plan of an Xcode build in \(path) holds a compile command for \(module)")
+            }
             let logs = activityLogs(in: path)
             guard !logs.isEmpty else { throw ScanUsageError("no .xcactivitylog in \(path) or its Logs/Build") }
             var newest: String?

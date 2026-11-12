@@ -195,4 +195,32 @@ import Testing
         #expect(!base.arguments.contains("-DKERN_FLAG"))
         #expect(SwiftPMBuild.savedCommand(target: "Missing", scratch: scratch, cache: scratch + "/none.args", ownBuild: true) == nil)
     }
+
+    /// Xcode's plan of a build (`XCBuildData/<id>.xcbuilddata`) is the log of a build that is still running: each
+    /// module's command, quoted as `tokenize` reads it, also for a module an incremental build does not compile.
+    @Test func anXcodeBuildPlanReadsAsALogOfEveryModulesCommand() throws {
+        let intermediates = NSTemporaryDirectory() + "sfv-xcode-\(UUID().uuidString)"
+        defer { try? FileManager.default.removeItem(atPath: intermediates) }
+        let spaced = kern + ["-I", "/Users/Some One/Derived Data"]
+        let plan = intermediates + "/XCBuildData/\(idA).xcbuilddata"
+        try FileManager.default.createDirectory(atPath: plan, withIntermediateDirectories: true)
+        try Data(
+            [
+                task(spaced), task(base), task(base), task(["builtin-SwiftDriver", "--", "/usr/bin/swiftc", "-module-name", "Two", "-DA"]),
+                task(["builtin-SwiftDriver", "--", "/usr/bin/swiftc", "-module-name", "Two", "-DB"]),
+            ].flatMap(\.bytes)
+        )
+        .write(to: URL(fileURLWithPath: plan + "/task-store.msgpack"))
+
+        for folder in [intermediates, intermediates + "/XCBuildData", plan] {
+            #expect(SwiftPMBuild.xcodeBuildData(in: folder) == [plan])
+        }
+        #expect(SwiftPMBuild.xcodeBuildData(in: NSTemporaryDirectory()).isEmpty)
+
+        let log = try SwiftPMBuild.readBuildLog(intermediates, module: "Kern")
+        #expect(SwiftPMBuild.compileInvocation(in: log, module: "Kern")?.arguments == Array(spaced.dropFirst(3)))
+        #expect(SwiftPMBuild.compileInvocation(in: log, module: "Base")?.arguments == ["-module-name", "Base", "-Onone"])
+        #expect(SwiftPMBuild.compileInvocation(in: log, module: "Two") == nil)
+        #expect(throws: ScanUsageError.self) { try SwiftPMBuild.readBuildLog(intermediates, module: "Two") }
+    }
 }

@@ -20,6 +20,47 @@ extension SwiftPMBuild {
     }
 }
 
+/// Xcode keeps the same files for each build it plans: `<DerivedData>/Build/Intermediates.noindex/XCBuildData/<id>.xcbuilddata/`.
+/// The plan of a build holds the command of every Swift module in it, also of a module an incremental build does not
+/// compile, and it is written before the first task runs: a Run Script phase of the build can read its own build's
+/// plan, which no activity log offers (Xcode writes that log when the build ends).
+extension SwiftPMBuild {
+    /// The `.xcbuilddata` folders `path` names, newest first: the folder itself, the `XCBuildData` folder, or the
+    /// `Intermediates.noindex` folder that holds it. Empty for any other folder, so a DerivedData folder is still read
+    /// as a folder of activity logs.
+    package static func xcodeBuildData(in path: String) -> [String] {
+        let fm = FileManager.default
+        if fm.fileExists(atPath: path + "/task-store.msgpack") { return [path] }
+        let folder = fm.fileExists(atPath: path + "/XCBuildData") ? path + "/XCBuildData" : path
+        let names = ((try? fm.contentsOfDirectory(atPath: folder)) ?? []).filter { $0.hasSuffix(".xcbuilddata") }
+        func modified(_ path: String) -> Date {
+            ((try? fm.attributesOfItem(atPath: path + "/task-store.msgpack"))?[.modificationDate] as? Date) ?? .distantPast
+        }
+        return names.map { folder + "/" + $0 }.filter { fm.fileExists(atPath: $0 + "/task-store.msgpack") }
+            .sorted { modified($0) > modified($1) }
+    }
+
+    /// The plan in the `.xcbuilddata` folder `path` as the log lines `compileInvocation` reads
+    /// (`builtin-SwiftDriver -- <swiftc> …`), one per module. A module the plan holds with two different commands
+    /// (two architectures) gets none: no command is better than a guessed one. Nil when the file cannot be read.
+    package static func xcodeBuildDataLog(_ path: String) -> String? {
+        guard let commands = TaskStore.commands(at: path + "/task-store.msgpack") else { return nil }
+        return commands.keys.sorted().compactMap { module -> String? in
+            guard let found = commands[module], found.count == 1, let command = found.first,
+                !command.contains(where: { $0.contains("\n") })
+            else { return nil }
+            return "builtin-SwiftDriver -- " + command.map(quoted).joined(separator: " ")
+        }.joined(separator: "\n")
+    }
+
+    /// One argument as `tokenize` reads it back.
+    private static func quoted(_ argument: String) -> String {
+        guard argument.isEmpty || argument.contains(where: { " \"'\\\n".contains($0) }) else { return argument }
+        let escaped = argument.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        return "\"" + escaped + "\""
+    }
+}
+
 /// Reads the Swift compile commands out of a `task-store.msgpack`, once per version of the file in a process.
 private enum TaskStore {
     private final class Cache: @unchecked Sendable {

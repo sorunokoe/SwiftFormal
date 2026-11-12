@@ -157,6 +157,31 @@ import Testing
         #expect(!strict.passed)
     }
 
+    /// With the test sources given, "not proved by logic" is an error unless a walk is linked to the function: the build
+    /// then sees the test that checks it, and a promise nothing checks fails it.
+    @Test func notProvedByLogicNeedsALinkedWalkWhenTheTestsAreGiven() {
+        let boxed = function("Shop.boxed(_:)", .unsupported, line: 21, category: "classes and objects")
+        let other = function("Shop.other(_:)", .unsupported, line: 31, category: "classes and objects")
+        let promises = [promise("boxed", .verify, line: 20), promise("other", .verify, line: 30)]
+        let walk = WalkCheck(subject: "Shop.boxed", file: "/p/ShopTests.swift", line: 9, suite: "ShopProofTests", test: "boxed")
+
+        let covered = BuildCheck.evaluate(report([boxed]), promises: [promises[0]], walks: [walk])
+        #expect(covered.passed && covered.unproved == 1)
+        #expect(covered.diagnostics.allSatisfy { !$0.contains(": error: ") && !$0.contains(": warning: ") })
+        #expect(covered.diagnostics.contains { $0.contains(": note: [SwiftFormal] Shop.boxed(_:)") && $0.contains("ShopTests.swift:9") })
+
+        let uncovered = BuildCheck.evaluate(report([other]), promises: [promises[1]], walks: [walk])
+        #expect(!uncovered.passed)
+        #expect(uncovered.diagnostics.first?.contains(": error: [SwiftFormal] Shop.other(_:) is not proved") == true)
+        #expect(uncovered.diagnostics.first?.contains("no walk is linked to it") == true)
+
+        let none = BuildCheck.evaluate(report([other]), promises: [promises[1]], walks: [])
+        #expect(!none.passed)
+
+        let missing = BuildCheck.evaluate(report([]), promises: [promises[1]], walks: [walk])
+        #expect(!missing.passed)
+    }
+
     /// App study round 6, L8: an undecided function gives the reason Scan gave. "Within the budget" only for the budget;
     /// results logic does not model are named, with the fix hint, because a larger budget would not help.
     @Test func anUndecidedPromiseSaysWhetherTheBudgetOrAnUnmodelledResultStoppedIt() {

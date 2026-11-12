@@ -218,10 +218,10 @@ public enum SwiftPMBuild {
         return (best[0], Array(best.dropFirst()))
     }
 
-    /// The build gate prints into the same log, sometimes in the middle of the compile command line. Its messages are
-    /// removed (with their newline) so that the command is whole again.
+    /// The build gate and CoreGraphics (a PDF warning on stderr) print into the same log, sometimes in the middle of
+    /// the compile command line. Their messages are removed (with their newline) so that the command is whole again.
     package static func withoutGateMessages(_ log: String) -> String {
-        log.replacing(/sfverify: gate[^\n]*\n/, with: "")
+        log.replacing(/(sfverify: gate|CoreGraphics PDF has logged an error)[^\n]*\n/, with: "")
     }
 
     /// Splits like a shell: backslash escapes and single or double quotes.

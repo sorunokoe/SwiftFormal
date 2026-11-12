@@ -72,4 +72,16 @@ import Testing
         #expect(SwiftPMBuild.isWhole(command), "\(command)")
         #expect(command.contains(f.plugin + "#SwiftNavigationMacros") && command.contains("-DFOO"))
     }
+
+    /// CoreGraphics prints its PDF warning to stderr, which `swift build -v` shares with the command line: its words
+    /// once became input files of the saved command.
+    @Test func aCoreGraphicsWarningInsideTheCommandIsRemoved() throws {
+        let f = try Self.fixture()
+        defer { try? FileManager.default.removeItem(atPath: f.dir) }
+        let log =
+            "/x/swiftc -module-name M -DFOO CoreGraphics PDF has logged an error. Set environment variable "
+            + "\"CG_PDF_VERBOSE\" to learn more.\n@\(f.list) -DBAR\n"
+        let command = try #require(SwiftPMBuild.compileCommand(in: log, module: "M"))
+        #expect(command == ["-module-name", "M", "-DFOO", "@" + f.list, "-DBAR"])
+    }
 }

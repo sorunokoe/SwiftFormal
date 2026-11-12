@@ -61,11 +61,16 @@ swiftformal check --gate --build-log build.log --target App
 ```
 
 - `--build-log` also takes the folder of Xcode's activity logs.
+- It also takes Xcode's build plan: `<DerivedData>/Build/Intermediates.noindex/XCBuildData` (or one `.xcbuilddata`
+  folder in it). Xcode writes the plan when a build starts, so a Run Script phase **after Compile Sources** can read
+  the plan of the build it runs in (`$OBJROOT/XCBuildData`, with `--scratch-path "$OBJROOT/../.."`). A module that the
+  plan holds with two different commands (two architectures) is not used. Turn User Script Sandboxing off for that
+  phase.
 - `--scratch-path` names that build's folder when it is not `<package>/.build` or the log's folder; `--cache-dir`
   where the command is saved for a later build that compiled nothing.
 - Every run checks again: a log is not a build whose inputs a stamp can hash.
-- This is the CI flow; a Run Script phase cannot read the log of the build it runs in. `Scripts/check-examples.sh`
-  runs it on `Examples/GatedPackage`.
+- A Run Script phase cannot read the activity log of the build it runs in (Xcode writes it when the build ends); it
+  reads the build plan instead. `Scripts/check-examples.sh` runs the log flow on `Examples/GatedPackage`.
 
 ### What it checks
 
@@ -81,12 +86,17 @@ swiftformal check --gate --build-log build.log --target App
   (`#expect(verify_boxed().isProved)`). A computed property, a `mutating` method or a function with nothing to walk
   has no walk: the test must call it. The build cannot see whether such a test exists. `--strict` makes every warning
   an error.
+- **`--tests <dir>` (repeatable):** the folders with your walks. The gate reads their `Prove(...)` subjects as text
+  and links them to the functions. An unproved function with a linked walk becomes a **note** ("left to the walk at
+  File.swift:12"); one without a walk is an **error**, as is a promise that no compiled function has. With
+  `--strict --tests`, every promise is then proved by logic or covered by a walk. The gate links walks; it does not
+  run them (`swift test` does), and it cannot tell that a walk checks the promise itself.
 - **Assumptions:** a proof that trusts calls with no body (a binary framework, a module that was not scanned) lists
   them in a note, and the summary counts such proofs: `3 of 4 promises proved by logic (1 assuming calls with no
   body), …` ([types from binary frameworks](scan.md#types-from-binary-frameworks)). `--no-opaque-calls` refuses such
   calls instead: the function is unsupported, and the gate fails.
 - **Exit codes:** 0 no error; 1 an error, or a target that could not be built; 2 a usage error. A `check` option that
-  does not apply to the gate (`--scan`, `--tests`, `--at`, `--json`, …) is a usage error, not ignored.
+  does not apply to the gate (`--scan`, `--at`, `--json`, …) is a usage error, not ignored.
 
 ### Speed: the same `.build`, a stamp and the proof cache
 

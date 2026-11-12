@@ -55,8 +55,15 @@ public enum BuildCheck {
     /// Functions without a promise (no `@Verify`, no contract) are left out. A contract is the one Scan
     /// paired with its function (same type, same parameters); a `_requires` / `_ensures` it could not pair checks
     /// nothing, which is an error.
-    public static func evaluate(_ report: ScanReport, promises: [Promise], strict: Bool = false) -> BuildCheckResult {
+    ///
+    /// With `walks` (the `Prove` walks of the test sources), a promise logic did not prove is an error unless a walk is
+    /// linked to its function, and a linked one is a note naming the walk: the build then sees the test that checks it.
+    /// That the walk runs, and passes, is for the tests.
+    public static func evaluate(
+        _ report: ScanReport, promises: [Promise], strict: Bool = false, walks: [WalkCheck]? = nil
+    ) -> BuildCheckResult {
         var result = BuildCheckResult()
+        let linker = WalkLinker(scans: [report])
         var matched: Set<Int> = []
         let ignored = Set(report.functions.flatMap { $0.ignoredContracts ?? [] })
         for function in report.functions {
@@ -78,23 +85,29 @@ public enum BuildCheck {
             }
             guard index != nil || function.hasContract else { continue }
             if let index { matched.insert(index) }
-            count(function, walk: index.flatMap { promises[$0].walk }, strict: strict, into: &result)
+            let coverage = WalkCoverage(walks, function: function, linker: linker)
+            count(
+                function, walk: index.flatMap { promises[$0].walk }, strict: strict || coverage.isMissing, coverage: coverage,
+                into: &result)
         }
         for (index, promise) in promises.enumerated() where !matched.contains(index) {
             result.checked += 1
             result.unproved += 1
-            let demanding = strict
+            let demanding = strict || walks != nil
             let why = "logic found no compiled function for it (generic, never emitted, or in a type it cannot read)"
+            let next = walks != nil ? "; no walk can be linked to it" : untested(walk: promise.walk)
             result.diagnostics.append(
                 line(
                     SourceLocation(file: promise.file, line: promise.declarationLine, column: 1), demanding ? .error : .warning,
-                    "\(promise.name) is not proved: \(why)\(demanding ? "" : untested(walk: promise.walk))"))
+                    "\(promise.name) is not proved: \(why)\(demanding && walks == nil ? "" : next)"))
         }
         return result
     }
 
     /// Counts a function with a promise as proved, broken or not proved, with its diagnostics.
-    private static func count(_ function: FunctionReport, walk: String?, strict: Bool, into result: inout BuildCheckResult) {
+    private static func count(
+        _ function: FunctionReport, walk: String?, strict: Bool, coverage: WalkCoverage, into result: inout BuildCheckResult
+    ) {
         result.checked += 1
         switch function.status {
         case .safe, .contractHolds:
@@ -106,7 +119,7 @@ public enum BuildCheck {
             result.diagnostics += broken(function) + assumed(function)
         case .undecided, .unsupported, .internalError:
             result.unproved += 1
-            result.diagnostics.append(unproved(function, demanding: strict, walk: walk))
+            result.diagnostics.append(unproved(function, demanding: strict, walk: walk, coverage: coverage))
         }
     }
 
@@ -131,7 +144,9 @@ public enum BuildCheck {
         walk.map { "; only a test can check it now, e.g. #expect(\($0).isProved)" } ?? "; only a test that calls it can check it now"
     }
 
-    private static func unproved(_ function: FunctionReport, demanding: Bool, walk: String?) -> String {
+    private static func unproved(
+        _ function: FunctionReport, demanding: Bool, walk: String?, coverage: WalkCoverage = WalkCoverage()
+    ) -> String {
         var why: String
         switch function.status {
         case .undecided:
@@ -154,7 +169,10 @@ public enum BuildCheck {
         }
         let contract =
             function.hasContract && function.category != Verifier.contractNotReadCategory ? "; its contract is not checked" : ""
-        let next = demanding ? "" : untested(walk: walk)
+        if let leftTo = coverage.description {
+            return line(function.location, .note, "\(function.name) is not proved by logic: \(why)\(contract); left to \(leftTo)")
+        }
+        let next = coverage.isRequired ? "; no walk is linked to it" : demanding ? "" : untested(walk: walk)
         return line(function.location, demanding ? .error : .warning, "\(function.name) is not proved: \(why)\(contract)\(next)")
     }
 
