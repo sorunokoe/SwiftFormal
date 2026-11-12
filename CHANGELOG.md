@@ -4,6 +4,8 @@ All notable changes, in the [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-12
+
 ### Added
 
 - `swiftformal check --gate --tests <dir>`: the gate links walks to the functions logic cannot prove. With
@@ -86,5 +88,6 @@ SemVer. The public API is the products `SwiftFormal` and `SwiftFormalTesting`, p
 
 Before 1.0, a minor version (0.1 to 0.2) may break the API. Every break is listed here under **Changed** or **Removed**, with the old name and the new one. A patch version (0.1.0 to 0.1.1) does not break. A fix that makes a tool say less (more `unsupported`) to remove a wrong verdict is a fix, not a break ([ADR 0006](docs/decisions/0006-soundness-policy.md)). Deprecated names stay for one minor version.
 
-[Unreleased]: https://github.com/sorunokoe/SwiftFormal/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/sorunokoe/SwiftFormal/compare/0.1.1...HEAD
+[0.1.1]: https://github.com/sorunokoe/SwiftFormal/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/sorunokoe/SwiftFormal/releases/tag/0.1.0
